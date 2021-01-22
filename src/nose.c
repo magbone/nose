@@ -2,7 +2,7 @@
 #include"nose.h"
 #include"device.h"
 #include"net_config.h"
-#include"connection.h"
+#include"config.h"
 
 int
 main(int argc, char ** argv)
@@ -14,11 +14,10 @@ main(int argc, char ** argv)
       printf("Setting ip configure\n");
       set_ip_configure("tun4", "10.1.0.10", "10.1.0.20");
 
-      int sock_fd;
-      if ((sock_fd = make_socket("172.16.15.129", 1723)) < 0) return (FAILED);
-
-      // Doing main loop
-      mainloop(fd, sock_fd);
+      struct config conf;
+      conf.server_host = NULL;
+      conf.server_port = 9090;
+      conf.device_fd = fd;
 
       return 0;
 }
