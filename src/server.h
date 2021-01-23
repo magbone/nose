@@ -1,4 +1,8 @@
 
+
+#ifndef _SERVER_H_
+#define _SERVER_H_
+
 #include "nose.h"
 #include "config.h"
 #include <uv.h>
@@ -26,3 +30,5 @@ static void forwarding_read(uv_stream_t *client, ssize_t nread, const uv_buf_t *
 static void on_new_connection(uv_stream_t *server, int status);
 
 int server_loop(struct config conf);
+
+#endif // !_SERVER_H_

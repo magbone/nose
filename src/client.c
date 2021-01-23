@@ -1,6 +1,7 @@
 
 
 #include "client.h"
+#include "device.h"
 
 static void 
 utun_poll_cb(uv_poll_t *handle, int status, int event)

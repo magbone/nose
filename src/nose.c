@@ -1,23 +1,118 @@
 
-#include"nose.h"
-#include"device.h"
-#include"net_config.h"
-#include"config.h"
+#include "nose.h"
+#include "device.h"
+#include "net_config.h"
+#include "utils.h"
+#include "client.h"
+#include "server.h"
+
+enum WORK_MODE{CLIENT, SERVER};
+
+int work_mode = CLIENT;
 
 int
-main(int argc, char ** argv)
+check_mode_argus(struct config conf)
 {
-      int fd;
+      if (work_mode == CLIENT)
+            return conf.server_host != NULL && conf.local_host != NULL && \
+                  conf.remote_host != NULL && conf.server_port > 0;
+      else return conf.server_host != NULL && conf.server_port > 0;
+} 
+void 
+print_usage()
+{
+      printf("nose is a very simple VPN implement over p2p\n\n"
+             "Usage: nose [server|client] \n"
+             "  -l IP address assigned to the utun interface of local machine\n"
+             "  -r IP address assigned to the other peer of p2p\n"
+             "  -sh IP address of public server for forwarding the traffic\n"
+             "  -sp Port number given to the public server\n\n\n"
+             "Examples:\n"
+             "In client:\n"
+             "nose client -l 10.1.0.10 -r 10.1.0.20 -sh x.x.x.x -sp 9090\n"
+             "In server:\n"
+             "nose server -sh x.x.x.x -sp 9090\n\n");
+}
 
-      if ((fd = utun_open("tun4")) < 0) return (FAILED);
-
-      printf("Setting ip configure\n");
-      set_ip_configure("tun4", "10.1.0.10", "10.1.0.20");
+int
+main(int argc, char *argv[])
+{
+      if (argc <= 1)
+      {
+            print_usage();
+            return 0;
+      }
 
       struct config conf;
-      conf.server_host = NULL;
-      conf.server_port = 9090;
-      conf.device_fd = fd;
+      for(int i = 1; i < argc; i++)
+      {
+            if (strcmp(argv[i], "server") == 0)
+                  work_mode = SERVER;
+            else if (strcmp(argv[i], "-l") == 0)
+            {
+                  char *address = ++i < argc ? argv[i] : NULL;
+                  if (!address || !is_valid_ip_address(address))
+                  {
+                        printf("Invalid argument: %s\n", address);
+                        return (FAILED);
+                  }
+                  conf.local_host = address;
+            }
+            else if (strcmp(argv[i], "-r") == 0)
+            {
+                  char *address = ++i < argc ? argv[i] : NULL;
+                  if (!address || !is_valid_ip_address(address))
+                  {
+                        printf("Invalid argument: %s\n", address);
+                        return (FAILED);
+                  }
+                  conf.remote_host = address;
+            }
+            else if (strcmp(argv[i], "-sh") == 0)
+            {
+                  char *address = ++i < argc ? argv[i] : NULL;
+                  if (!address ||!is_valid_ip_address(address))
+                  {
+                        printf("Invalid argument: %s\n", address);
+                        return (FAILED);
+                  }
+                  conf.server_host = address;
+            }
+            else if (strcmp(argv[i], "-sp") == 0)
+            {
+                  char *port_str = ++i < argc ? argv[i] : NULL;
+                  int port;
+                  if (!port_str || !(port = atoi(port_str))){
+                        printf("Invalid argument: %s\n", port_str);
+                        return (FAILED);
+                  }
+                  conf.server_port = port;
+            }
+      }
+
+      // Check the work mode and its conrresponding arguments.
+      if (!check_mode_argus(conf))
+      {
+            printf("Lack some arguments\n");
+            return (FAILED);
+      }
+
+      if (work_mode == CLIENT)
+      {
+            int fd;
+
+            if ((fd = utun_open("tun4")) < 0) return (FAILED);
+
+            printf("Setting ip configure\n");
+            set_ip_configure("tun4", conf.local_host, conf.remote_host);
+
+            
+            conf.utun_fd = fd;
+
+            for(;;);
+      }
+      else
+            return server_loop(conf);
 
       return 0;
 }

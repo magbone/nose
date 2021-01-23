@@ -1,4 +1,8 @@
 
+
+#ifndef _CLIENT_H_
+#define _CLIENT_H_
+
 #include "nose.h"
 #include "config.h"
 #include "device.h"
@@ -14,3 +18,5 @@ static void on_connect(uv_connect_t* req, int status);
 static void utun_poll_cb(uv_poll_t *handle, int status, int event);
 
 int client_loop(struct config conf) ;
+
+#endif // !_CLIENT_H_

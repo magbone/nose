@@ -28,3 +28,13 @@ utun_open(char *device_name) {
       return fd;
 }
 
+
+int utun_read(int fd, char *buffer)
+{
+      return read(fd, buffer, 1518);
+}
+
+int utun_write(int fd, char *buffer, int len)
+{
+      return write(fd, buffer, len);
+}

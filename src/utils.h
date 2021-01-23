@@ -1,7 +1,11 @@
 
+
+#ifndef _UTILS_H_
+#define _UTILS_H_
+
 #include "nose.h"
 
-// Transfer little end to big end
-u_int16_t ltobs(u_int16_t);
+int is_valid_ip_address(char *ip);
 
+#endif // !_UTILS_H_
 
