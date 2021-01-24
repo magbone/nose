@@ -36,7 +36,7 @@ get_other_client(uv_tcp_t *client)
       return NULL;
 }
 
-static void 
+void 
 alloc_buffer(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
 {
       buf->len = suggested_size;
@@ -54,7 +54,7 @@ on_close(uv_handle_t *handle)
       }
 }
 
-static void 
+void 
 free_write_req(uv_write_t *req)
 {
       write_req_t *wr = (write_req_t *)req;
@@ -66,7 +66,7 @@ static void
 forwarding_write(uv_write_t *req, int status)
 {
       if (status)
-            fprintf(stdout, "[ERROR] Write error %s\n", uv_strerror(status));
+            fprintf(stdout, "[ERROR] Write error: %s\n", uv_strerror(status));
       free_write_req(req);
 }
 
@@ -89,7 +89,7 @@ forwarding_read(uv_stream_t *client, ssize_t nread, const uv_buf_t *buf)
       else if(nread < 0)
       {
             if(nread != UV_EOF)
-                  fprintf(stderr, "[ERROR] Read error %s\n", uv_err_name(nread));
+                  fprintf(stderr, "[ERROR] Read error: %s\n", uv_err_name(nread));
             else
                   fprintf(stderr, "[ERROR] Client disconnect\n");
 
@@ -103,7 +103,7 @@ on_new_connection(uv_stream_t * server, int status)
 {
       if (status < 0)
       {
-            fprintf(stderr, "[ERROR] New conncetion error %s\n", uv_strerror(status));
+            fprintf(stderr, "[ERROR] New conncetion error: %s\n", uv_strerror(status));
             return;
       }
 
@@ -114,10 +114,18 @@ on_new_connection(uv_stream_t * server, int status)
       {
             add_client(client);
             connection_count++;
+
+            // Get connected peer's information
+            struct sockaddr_in sock_addr;
+            int len = sizeof(struct sockaddr_in);
+            uv_tcp_getpeername(client, (struct sockaddr *)&sock_addr, &len);
+            fprintf(stdout, "[INFO] Connected client: %s:%d\n", inet_ntoa(sock_addr.sin_addr), sock_addr.sin_port);
+            
             uv_read_start((uv_stream_t *)client, alloc_buffer, forwarding_read);
       }
       else
       {
+            fprintf(stdout, "[INFO] Out of number of connections\n");
             uv_close((uv_handle_t *)client, NULL);
       }
 
@@ -125,22 +133,24 @@ on_new_connection(uv_stream_t * server, int status)
 }
 int server_loop(struct config conf)
 {
+      
       loop = uv_default_loop();
 
       uv_tcp_t server;
 
       uv_tcp_init(loop, &server);
 
+      
       struct sockaddr_in addr;
       uv_ip4_addr(conf.server_host, conf.server_port, &addr);
 
+      fprintf(stdout, "[INFO] Server listens at %s:%d\n", conf.server_host, conf.server_port);
       uv_tcp_bind(&server, (const struct sockaddr *)&addr, 0);
-
-      int ret = uv_listen((uv_stream_t *)&server, 10, on_new_connection);
+      int ret = uv_listen((uv_stream_t *)&server, 128, on_new_connection);
 
       if (ret)
       {
-            fprintf(stderr, "[ERROR] Listen eeror %s\n", uv_strerror(ret));
+            fprintf(stderr, "[ERROR] Listen eeror: %s\n", uv_strerror(ret));
             return 1;
       }
       return uv_run(loop, UV_RUN_DEFAULT);

@@ -5,6 +5,8 @@
 
 #include "nose.h"
 #include "config.h"
+#include "common.h"
+
 #include <uv.h>
 
 
@@ -17,14 +19,10 @@ static void add_client(uv_tcp_t *client);
 static void remove_client(uv_tcp_t *client);
 static uv_tcp_t * get_other_client(uv_tcp_t *client);
 
-typedef struct {
-      uv_write_t req;
-      uv_buf_t buf;
-}write_req_t;
 
-static void alloc_buffer(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf);
+void alloc_buffer(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf);
 static void on_close(uv_handle_t *handle);
-static void free_write_req(uv_write_t *req);
+void free_write_req(uv_write_t *req);
 static void forwarding_write(uv_write_t *req, int status);
 static void forwarding_read(uv_stream_t *client, ssize_t nread, const uv_buf_t *buf);
 static void on_new_connection(uv_stream_t *server, int status);

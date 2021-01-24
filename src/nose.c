@@ -109,10 +109,11 @@ main(int argc, char *argv[])
             
             conf.utun_fd = fd;
 
-            for(;;);
+            return client_loop(conf);
       }
-      else
+      else{
+            fprintf(stdout, "[INFO] Run as server mode\n");
             return server_loop(conf);
-
+      }
       return 0;
 }
