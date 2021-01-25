@@ -16,10 +16,10 @@ A simple VPN implement over p2p
  +---------+        +-------------+                                                                                     +-------------+       +--------+
 ```
 
-## Project Requirements
+## Project requirements
 This project built depends on some third party open sources.
 
-Dependencies list
+Dependencies list:
 ```
 libuv 1.31.1-dev
 ```
