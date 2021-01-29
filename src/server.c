@@ -76,7 +76,7 @@ forwarding_read(uv_stream_t *client, ssize_t nread, const uv_buf_t *buf)
       if(nread > 0)
       {
             buf->base[nread] = 0;
-            fprintf(stdout, "[INFO] Receive data length: %ld\n", buf->len);
+            fprintf(stdout, "[INFO] Receive data length: %ld\n", nread);
 
             if (connection_count != 2) return;
             

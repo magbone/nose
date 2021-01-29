@@ -22,8 +22,7 @@ static void read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf);
 static void client_write(uv_write_t *req, int status);
 static void on_close(uv_handle_t *handle);
 static void on_connect(uv_connect_t* req, int status);
-static void utun_poll_cb(uv_poll_t *handle, int status, int event);
-static int utun_read_process();
+static void * utun_read_process(void* args);
 
 int client_loop(struct config conf) ;
 
