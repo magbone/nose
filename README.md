@@ -54,7 +54,7 @@ For the client, the program should be run as superuser or other users which are 
 - [ ] Optimize the method of opening utun device   
 
 - [x] Data traffic bewteen utun device and local client
-- [ ] Utun implement in Linux platform
+- [x] Utun implement in Linux platform
 - [ ] Implement a relatively safe and simple VPN
 
 ### May do

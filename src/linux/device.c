@@ -27,7 +27,6 @@ int utun_open(char *device_name)
             perror("[ERROR] Opening /dev/net/tun");
             return fd;
       }
-      printf("%d\n", fd);
 
       memset(&ifr, 0, sizeof(ifr));
 
@@ -42,7 +41,6 @@ int utun_open(char *device_name)
             close(fd);
             return err;
       }
-      printf("%s\n", ifr.ifr_name); 
       return fd;
 }
 

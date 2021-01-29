@@ -17,11 +17,11 @@ read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
       if(nread > 0)
       {
             buf->base[nread] = 0;
-            fprintf(stdout, "[INFO] Receive data length: %ld\n", buf->len);
+            fprintf(stdout, "[INFO] Receive data length: %ld\n", nread);
 
-            char buffer[buf->len];
-            memcpy(buffer, buf->base, buf->len);
-            utun_write(_conf.utun_fd, buffer, buf->len);
+            char buffer[nread];
+            memcpy(buffer, buf->base, nread);
+            utun_write(_conf.utun_fd, buffer, nread);
             return;
             
       }
@@ -75,9 +75,7 @@ utun_read_process(void *args)
                   {
                         printf("[ERROR] %s\n", uv_strerror(ret));
                   } 
-                  printf("ret: %d\n", ret);
             }
-            
 
       }
 }

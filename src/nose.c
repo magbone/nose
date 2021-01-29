@@ -111,7 +111,7 @@ main(int argc, char *argv[])
             set_ip_configure("tun4", conf.local_host, conf.remote_host);
             #endif 
             
-            #if defined(_UNIX)
+            #if defined(__linux)
             if ((fd = utun_open("tun0")) < 0) return (FAILED);
             #endif
 

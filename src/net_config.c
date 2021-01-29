@@ -21,7 +21,7 @@ set_ip_configure(char * interface, char *src_addr, char *dst_addr)
       }
 #endif
       memset(command_line, 0, 100);
-      sprintf(command_line, "ifconfig %s %s %s up", interface, src_addr, dst_addr);
+      sprintf(command_line, "ifconfig %s %s pointopoint %s up", interface, src_addr, dst_addr);
       
       if (system(command_line) < 0){
             perror("[ERROR] Execute ifconfig failed");
