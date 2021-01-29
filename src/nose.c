@@ -100,13 +100,21 @@ main(int argc, char *argv[])
       if (work_mode == CLIENT)
       {
             int fd;
-
+            #if defined(_UNIX)
             if ((fd = utun_open("tun4")) < 0) return (FAILED);
-
+            #endif
             printf("Setting ip configure\n");
-            set_ip_configure("tun4", conf.local_host, conf.remote_host);
 
+            #if defined(__linux)
+            set_ip_configure("tun0", conf.local_host, conf.remote_host);
+            #elif defined(_UNIX)
+            set_ip_configure("tun4", conf.local_host, conf.remote_host);
+            #endif 
             
+            #if defined(_UNIX)
+            if ((fd = utun_open("tun0")) < 0) return (FAILED);
+            #endif
+
             conf.utun_fd = fd;
 
             return client_loop(conf);
