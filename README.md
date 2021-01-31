@@ -56,6 +56,7 @@ For the client, the program should be run as superuser or other users which are 
 - [x] Data traffic bewteen utun device and local client
 - [x] Utun implement in Linux platform
 - [ ] Implement a relatively safe and simple VPN
+- [x] ICMP echo reply for echo request
 
 ### May do
 

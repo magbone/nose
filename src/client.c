@@ -2,6 +2,9 @@
 
 #include "client.h"
 #include "device.h"
+#include "utils.h"
+#include "icmp.h"
+
 #include <unistd.h>
 #include <pthread.h>
 
@@ -11,6 +14,7 @@ on_close(uv_handle_t *handle)
       if (handle != NULL)
             free(handle);
 }
+
 static void 
 read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
 {
@@ -21,6 +25,18 @@ read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
 
             char buffer[nread];
             memcpy(buffer, buf->base, nread);
+            // Reply for the icmp echo request
+            if (is_icmp_echo_req(buffer)){
+                  icmp_echo_reply(buffer, nread);
+                  write_req_t *req = (write_req_t *)malloc(sizeof(write_req_t));
+                  int ret = nread;
+                  req->buf = uv_buf_init(buffer, ret);
+                  if((ret = uv_write((uv_write_t *)req, (uv_stream_t *)&client, &req->buf, 1, client_write)) < 0)
+                  {
+                        printf("[ERROR] %s\n", uv_strerror(ret));
+                  } 
+                  return;
+            }
             utun_write(_conf.utun_fd, buffer, nread);
             return;
             
