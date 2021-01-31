@@ -43,7 +43,7 @@ client_write(uv_write_t *req, int status)
 {
       if (status)
             fprintf(stdout, "[ERROR] Write error: %s\n", uv_strerror(status));
-      free_write_req(req);
+      //free_write_req(req);
 }
 
 
@@ -83,7 +83,8 @@ int client_loop(struct config conf)
 {
       
       pthread_t tun_thread;
-      
+      _conf = conf;
+
       if (pthread_create(&tun_thread, NULL, utun_read_process, NULL) < 0)
       {
             fprintf(stderr, "[ERROR] Create the thread failed\n");
@@ -92,7 +93,7 @@ int client_loop(struct config conf)
 
       loop = uv_default_loop();
       uv_tcp_init(loop, &client);
-      _conf = conf;
+      
       struct sockaddr_in addr;
       uv_connect_t *connect = (uv_connect_t *)malloc(sizeof(uv_connect_t));
 

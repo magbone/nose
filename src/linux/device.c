@@ -30,7 +30,7 @@ int utun_open(char *device_name)
 
       memset(&ifr, 0, sizeof(ifr));
 
-      ifr.ifr_flags = IFF_TUN;
+      ifr.ifr_flags = IFF_TUN | IFF_NO_PI;
 
       if (*device_name)
             strncpy(ifr.ifr_name, device_name, IFNAMSIZ);
