@@ -5,6 +5,7 @@
 
 #include "nose.h"
 
+#define ODD_EVEN(arr, i, len) ( (i == len) ? 0x00 : arr[i]) // odd octets
 
 int is_valid_ip_address(char *ip);
 

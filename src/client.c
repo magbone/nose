@@ -3,7 +3,6 @@
 #include "client.h"
 #include "device.h"
 #include "utils.h"
-#include "icmp.h"
 
 #include <unistd.h>
 #include <pthread.h>
