@@ -4,8 +4,10 @@
 
 
 #include "utils.h"
+
 #include <arpa/inet.h>
 #include <ctype.h>
+#include <assert.h>
 
 int 
 is_valid_ip_address(char *ip)
@@ -16,12 +18,13 @@ is_valid_ip_address(char *ip)
 }
 
 void 
-swap(void *a, void* b)
+swap(void *a, void* b, size_t size)
 {
-      void *c = malloc(sizeof(b));
-      memcpy(c, b, sizeof(b));
-      memcpy(b, a, sizeof(a));
-      memcpy(a, c, sizeof(c));
+      void *c = malloc(size);
+      assert(c == NULL);
+      memcpy(c, b, size);
+      memcpy(b, a, size);
+      memcpy(a, c, size);
       free(c);
 }
 

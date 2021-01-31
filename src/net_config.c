@@ -21,8 +21,11 @@ set_ip_configure(char * interface, char *src_addr, char *dst_addr)
       }
 #endif
       memset(command_line, 0, 100);
+#if defined(__linux)
       sprintf(command_line, "ifconfig %s %s pointopoint %s up", interface, src_addr, dst_addr);
-      
+#elif defined(__APPLE__)
+      sprintf(command_line, "ifconfig %s %s %s up", interface, src_addr, dst_addr);
+#endif      
       if (system(command_line) < 0){
             perror("[ERROR] Execute ifconfig failed");
             return (ERROR);

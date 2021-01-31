@@ -58,7 +58,9 @@ void
 free_write_req(uv_write_t *req)
 {
       write_req_t *wr = (write_req_t *)req;
-      free(wr->buf.base);
+      // The following code will trigger the error of pointer being freed was not allocated
+      // if (wr->buf.base != NULL)
+      //       free(wr->buf.base);
       free(wr);
 }
 
