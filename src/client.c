@@ -75,7 +75,6 @@ utun_read_process(void *args)
                   {
                         printf("[ERROR] %s\n", uv_strerror(ret));
                   } 
-                  printf("ret: %d\n", ret);
             }
             
 
