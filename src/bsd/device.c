@@ -20,7 +20,7 @@ utun_open(char *device_name) {
       char real_name[20];
       memset(real_name, 0, 20);
       sprintf(real_name, "/dev/%s", device_name);
-      printf("%s\n", real_name);
+      fprintf(stdout, "[INFO] Open tun device: %s\n", real_name);
       if ((fd = open(real_name, O_RDWR | O_NONBLOCK)) <= 0){
             perror("[ERROR] Open a tun device failed");
             return (FAILED);

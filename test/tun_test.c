@@ -28,7 +28,6 @@ int main(void)
             printf("%02x ", buffer[i]);
         printf("\n");
     }
-    
     return 1;
 
 }
