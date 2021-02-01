@@ -44,6 +44,8 @@ main(int argc, char *argv[])
       }
 
       struct config conf;
+      memset(&conf, 0, sizeof(struct config));
+
       for(int i = 1; i < argc; i++)
       {
             if (strcmp(argv[i], "server") == 0)
@@ -97,22 +99,24 @@ main(int argc, char *argv[])
             return (FAILED);
       }
 
+      char dev_name[20] = "tun0";
+
       if (work_mode == CLIENT)
       {
             int fd;
             #if defined(_UNIX) || defined(__APPLE__)
-            if ((fd = utun_open("tun4")) < 0) return (FAILED);
+            if ((fd = utun_open(dev_name)) < 0) return (FAILED);
             #endif
             printf("Setting ip configure\n");
 
             #if defined(__linux)
-            set_ip_configure("tun0", conf.local_host, conf.remote_host);
+            set_ip_configure(dev_name, conf.local_host, conf.remote_host);
             #elif defined(_UNIX) || defined(__APPLE__)
-            set_ip_configure("tun4", conf.local_host, conf.remote_host);
+            set_ip_configure(dev_name, conf.local_host, conf.remote_host);
             #endif 
             
             #if defined(__linux)
-            if ((fd = utun_open("tun0")) < 0) return (FAILED);
+            if ((fd = utun_open(dev_name)) < 0) return (FAILED);
             #endif
 
             conf.utun_fd = fd;

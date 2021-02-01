@@ -51,7 +51,7 @@ For the client, the program should be run as superuser or other users which are 
 ## Tasklist
 
 ### Must do
-- [ ] Optimize the method of opening utun device   
+- [x] Optimize the method of opening utun device   
 
 - [x] Data traffic bewteen utun device and local client
 - [x] Utun implement in Linux platform

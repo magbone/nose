@@ -20,7 +20,7 @@ int utun_open(char *device_name)
 
       char *dev_path = "/dev/net/tun";
 
-      fprintf(stdout, "Opening a tun device...\n");
+      fprintf(stdout, "[INFO] Opening a tun device...\n");
       if ((fd = open(dev_path, O_RDWR)) < 0)
       {
             
@@ -32,15 +32,27 @@ int utun_open(char *device_name)
 
       ifr.ifr_flags = IFF_TUN | IFF_NO_PI;
 
-      if (*device_name)
+      if (device_name == NULL || !(*devname)) return (FAILED);
+      int id = 1;
+      do{
+            
             strncpy(ifr.ifr_name, device_name, IFNAMSIZ);
 
-      if ((err = ioctl(fd, TUNSETIFF, (void *)&ifr)) < 0)
+            if ((err = ioctl(fd, TUNSETIFF, (void *)&ifr)) > 0)
+                  break;
+            
+            sprintf(device_name, "tun%d", i);
+            memset(ifr.ifr_name, 0, IFNAMSIZ);
+      }while (i <= 255);
+      
+      if (i > 255) 
       {
-            perror("[ERROR] ioctl(TUNSETIFF)");
+            fprintf(stdout, "[ERROR] Device allocation is out of range\n");
             close(fd);
-            return err;
+            return (FAILED);
       }
+      strcpy(device_name, ifr.ifr_name);
+      
       return fd;
 }
 

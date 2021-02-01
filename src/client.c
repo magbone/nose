@@ -10,8 +10,9 @@
 static void 
 on_close(uv_handle_t *handle)
 {
-      if (handle != NULL)
-            free(handle);
+      // The following code will trigger the error of pointer being freed was not allocated
+      // if (handle != NULL)
+      //       free(handle);
 }
 
 static void 
