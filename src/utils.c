@@ -8,6 +8,7 @@
 #include <arpa/inet.h>
 #include <ctype.h>
 #include <assert.h>
+#include <openssl/sha.h>
 
 int 
 is_valid_ip_address(char *ip)
@@ -49,3 +50,32 @@ checksum_cmpt(char * array, int len)
       while(sum >> 16 != 0) sum = (sum & 0xffff) + (sum >> 16);
       return (u_int16_t)~sum;
 }
+
+void 
+gen_sha256(char *input, size_t len, char *output)
+{
+      unsigned char hash[SHA256_DIGEST_LENGTH];
+      SHA256_CTX sha256;
+      SHA256_Init(&sha256);
+      SHA256_Update(&sha256, input, len);
+      SHA256_Final(hash, &sha256);
+      for(int i = 0; i < SHA256_DIGEST_LENGTH; i++)
+      
+            sprintf(output + (i * 2), "%02x", hash[i]);
+      output[64] = 0;
+}
+
+int 
+combine_ser_chall_id(char *s_key, int challenge, int id, char *output)
+{
+      if (output == NULL) return (ERROR);
+
+      memcpy(output, s_key, strlen(s_key));
+      
+      char *chall = (char *)htons(challenge);
+      memcpy(output + strlen(s_key), chall, 2);
+      char *i = (char *)htons(id);
+      memcpy(output + strlen(s_key) + 2, i, 2);
+      return (strlen(s_key) + 2 + 2);
+}
+

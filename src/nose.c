@@ -15,7 +15,8 @@ check_mode_argus(struct config conf)
 {
       if (work_mode == CLIENT)
             return conf.server_host != NULL && conf.local_host != NULL && \
-                  conf.remote_host != NULL && conf.server_port > 0;
+                  conf.remote_host != NULL && conf.key != NULL && \
+                  conf.server_port > 0;
       else return conf.server_host != NULL && conf.server_port > 0;
 } 
 void 
@@ -26,10 +27,11 @@ print_usage()
              "  -l IP address assigned to the utun interface of local machine\n"
              "  -r IP address assigned to the other peer of p2p\n"
              "  -sh IP address of public server for forwarding the traffic\n"
-             "  -sp Port number given to the public server\n\n\n"
+             "  -sp Port number given to the public server\n"
+             "  -k the private key for authentication\n\n\n"
              "Examples:\n"
              "In client:\n"
-             "nose client -l 10.1.0.10 -r 10.1.0.20 -sh x.x.x.x -sp 9090\n"
+             "nose client -l 10.1.0.10 -r 10.1.0.20 -sh x.x.x.x -sp 9090 -k 123\n"
              "In server:\n"
              "nose server -sh x.x.x.x -sp 9090\n\n");
 }
@@ -84,11 +86,23 @@ main(int argc, char *argv[])
             {
                   char *port_str = ++i < argc ? argv[i] : NULL;
                   int port;
-                  if (!port_str || !(port = atoi(port_str))){
+                  if (!port_str || !(port = atoi(port_str)))
+                  {
                         printf("Invalid argument: %s\n", port_str);
                         return (FAILED);
                   }
                   conf.server_port = port;
+            }
+            else if(strcmp(argv[i], "-k") == 0)
+            {
+                  char *key = ++i < argc ? argv[i] : NULL;
+                  if (!key)
+                  {
+                        printf("Invalid argument: %s\n", key);
+                  }
+                  char hash[64];
+                  gen_sha256(key, strlen(key), hash);
+                  conf.key = hash;
             }
       }
 
