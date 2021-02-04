@@ -51,7 +51,7 @@ For the server, firstly make sure your firewall software allow to access to the 
 
 For the client, the program should be run as superuser or other users which are equal to the privilege of superuser. 
 
-## VPN protocol draft
+## VPN protocol(draft)
 ###  Preface
 Comparing with serveral famous VPN protocol——PPP, PPTP, SSL VPN, etc. and learning their natures and features, I finally present a relatively simple and available VPN protocol(Under daft) conbined with respectively advantages, including the **Authentiction** and **Encryption** which both meet the almost application scene for safety and protection.
 
@@ -60,7 +60,48 @@ It references from CHAP, Challenge-Handshake Authentication Protocol, which is a
 
 #### Work cycle
 
-### Encryption
+### Encryption 
+### DFA
+The VPN's deterministic finite automation is described by a five-element tuple: $(Q, \sum, 	\delta, q_0, F)$, it can be represented by diagrams of this form:
+
+![vpn_dfa.png](./imgs/vpn_dfa.png)
+
+
+Defined the states as follow:
+
+$s_0=Start$,
+$s_1=Authentication$,
+$s_2=Key\ exchange$,
+$s_3=Running$
+
+Defined the input or symbols as follow:
+
+$c_0=Start\ authenicating$, 
+$c_1=Authentication\ failed\ or\ timeout$,
+$c_2=Start\ key\ exchange$,
+$c_3=Key\ exchange\ failed\ or\ timeout$,
+$c_4=Key\ exchange\ success$,
+$c_5=Send\ the\ payload$
+
+$Q=\{ s_0, s_1, s_2, s_3\}$ 
+
+$\sum = \{c_0, c_1, c_2, c_3, c_4, c_5\}$
+
+The following table describles $\delta$:
+
+  | current state | input symbol | new state|
+  | ---- | ------- |  ----- | 
+  | $s_0$ | $c_0$ |  $s_1$ |
+  | $s_1$ | $c_1$ | $s_0$|
+  | $s_1$ | $c_2$ | $s_2$|
+  | $s_2$  | $c_3$ | $s_1$ |
+  | $s_2$  | $c_4$|  $s_3$|
+  | $s_3$  | $c_5$ | $s_3$|
+
+$q_0=s_0$
+
+$F=s_0$
+
 ## Tasklist
 
 ### Must do

@@ -14,7 +14,7 @@ auth_request_pkt(int id, int challenge, char* s_key, char* buffer)
       struct vpn_proto_header* header = (struct vpn_proto_header *)malloc(sizeof(struct vpn_proto_header));
       if (header == NULL)
       {
-            fprintf(stdout, "[ERROR] Malloc error\n");
+            fprintf(stderr, "[ERROR] Malloc error\n");
             return (ERROR);
       } 
 
@@ -29,7 +29,7 @@ auth_request_pkt(int id, int challenge, char* s_key, char* buffer)
       struct auth_req_pkt* pkt = (struct auth_req_pkt *)malloc(sizeof(struct auth_req_pkt));
       if (pkt == NULL)
       {
-            fprintf(stdout, "[ERROR] Malloc error\n");
+            fprintf(stderr, "[ERROR] Malloc error\n");
             return (ERROR);
       }
 
@@ -59,7 +59,7 @@ auth_respose_pkt(int id, int challenge, int message_code, char* buffer)
       struct vpn_proto_header* header = (struct vpn_proto_header *)malloc(sizeof(struct vpn_proto_header));
       if (header == NULL)
       {
-            fprintf(stdout, "[ERROR] Malloc error\n");
+            fprintf(stderr, "[ERROR] Malloc error\n");
             return (ERROR);
       } 
 
@@ -75,7 +75,7 @@ auth_respose_pkt(int id, int challenge, int message_code, char* buffer)
 
       if (pkt == NULL) 
       {
-            fprintf(stdout, "[ERROR] Malloc error\n");
+            fprintf(stderr, "[ERROR] Malloc error\n");
             return (ERROR);
       }
 

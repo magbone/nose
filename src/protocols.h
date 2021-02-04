@@ -7,7 +7,7 @@
 
 // Definition of type
 #define AUTH      0 // Autheniction
-#define ENCRYPT   1 // Encryption 
+#define KEY_NEG   1 // Key Negotiation
 #define APP_DATA  2 // Application Data
 
 // Definition of code for Authenication
