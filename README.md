@@ -62,45 +62,37 @@ It references from CHAP, Challenge-Handshake Authentication Protocol, which is a
 
 ### Encryption 
 ### DFA
-The VPN's deterministic finite automation is described by a five-element tuple: $(Q, \sum, 	\delta, q_0, F)$, it can be represented by diagrams of this form:
+The VPN's deterministic finite automation is described by a five-element tuple: ![](https://latex.codecogs.com/gif.latex?\(Q,%20\sum,%20%20\delta,%20q_0,%20F\)), it can be represented by diagrams of this form:
 
 ![vpn_dfa.png](./imgs/vpn_dfa.png)
 
 
 Defined the states as follow:
 
-$s_0=Start$,
-$s_1=Authentication$,
-$s_2=Key\ exchange$,
-$s_3=Running$
-
+![](https://latex.codecogs.com/gif.latex?s_0=Start,%20s_1=Authentication,%20s_2=Key\%20exchange,%20s_3=Running)
 Defined the input or symbols as follow:
 
-$c_0=Start\ authenicating$, 
-$c_1=Authentication\ failed\ or\ timeout$,
-$c_2=Start\ key\ exchange$,
-$c_3=Key\ exchange\ failed\ or\ timeout$,
-$c_4=Key\ exchange\ success$,
-$c_5=Send\ the\ payload$
+![](https://latex.codecogs.com/gif.latex?c_0=Start\%20authenicating,%20c_1=Authentication\%20failed\%20or\%20timeout,%20c_2=Start\%20key\%20exchange,%20c_3=Key\%20exchange\%20failed\%20or\%20timeout,%20c_4=Key\%20exchange\%20success,%20c_5=Send\%20the\%20payload)
 
-$Q=\{ s_0, s_1, s_2, s_3\}$ 
+![](https://latex.codecogs.com/gif.latex?Q=\{%20s_0,%20s_1,%20s_2,%20s_3\}) 
 
-$\sum = \{c_0, c_1, c_2, c_3, c_4, c_5\}$
+![](https://latex.codecogs.com/gif.latex?\sum%20=%20\{c_0,%20c_1,%20c_2,%20c_3,%20c_4,%20c_5\})
 
-The following table describles $\delta$:
+The following table describles ![](https://latex.codecogs.com/gif.latex?\delta):
 
   | current state | input symbol | new state|
   | ---- | ------- |  ----- | 
-  | $s_0$ | $c_0$ |  $s_1$ |
-  | $s_1$ | $c_1$ | $s_0$|
-  | $s_1$ | $c_2$ | $s_2$|
-  | $s_2$  | $c_3$ | $s_1$ |
-  | $s_2$  | $c_4$|  $s_3$|
-  | $s_3$  | $c_5$ | $s_3$|
+  | ![](https://latex.codecogs.com/gif.latex?s_0) | ![](https://latex.codecogs.com/gif.latex?c_0) |  ![](https://latex.codecogs.com/gif.latex?s_1) |
+  | ![](https://latex.codecogs.com/gif.latex?s_1) | ![](https://latex.codecogs.com/gif.latex?c_1) | ![](https://latex.codecogs.com/gif.latex?s_0)|
+  | ![](https://latex.codecogs.com/gif.latex?s_1) | ![](https://latex.codecogs.com/gif.latex?c_2) | ![](https://latex.codecogs.com/gif.latex?s_2)|
+  | ![](https://latex.codecogs.com/gif.latex?s_2)  | ![](https://latex.codecogs.com/gif.latex?c_3) | ![](https://latex.codecogs.com/gif.latex?s_1) |
+  | ![](https://latex.codecogs.com/gif.latex?s_2)  | ![](https://latex.codecogs.com/gif.latex?c_4)|  ![](https://latex.codecogs.com/gif.latex?s_3)|
+  | ![](https://latex.codecogs.com/gif.latex?s_3)  | ![](https://latex.codecogs.com/gif.latex?c_5) | ![](https://latex.codecogs.com/gif.latex?s_3)|
 
-$q_0=s_0$
+![](https://latex.codecogs.com/gif.latex?q_0=s_0)
 
-$F=s_0$
+![](https://latex.codecogs.com/gif.latex?F=s_0)
+
 
 ## Tasklist
 
