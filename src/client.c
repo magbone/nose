@@ -3,6 +3,7 @@
 #include "client.h"
 #include "device.h"
 #include "utils.h"
+#include "dfa_state.h"
 
 #include <unistd.h>
 #include <pthread.h>
@@ -91,6 +92,15 @@ int client_loop(struct config conf)
             fprintf(stderr, "[ERROR] Create the thread failed\n");
             return (ERROR);
       }
+
+      dfa_handler = (dfa *)malloc(sizeof(dfa));
+      if (dfa_handler == NULL)
+      {
+            fprintf(stderr, "[ERROR] Malloc error\n");
+            return (ERROR);
+      }     
+
+      init_dfa(dfa_handler, (int **)state_matrix, STATE_M, S_START);
 
       loop = uv_default_loop();
       uv_tcp_init(loop, &client);

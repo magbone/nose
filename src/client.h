@@ -7,12 +7,14 @@
 #include "config.h"
 #include "device.h"
 #include "common.h"
+#include "dfa.h"
 
 #include <uv.h>
 
 static uv_loop_t *loop;
 static uv_tcp_t client;
 static struct config _conf;
+static dfa* dfa_handler;
 
 
 extern void free_write_req(uv_write_t *req);
