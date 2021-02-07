@@ -69,12 +69,12 @@ The VPN's deterministic finite automation is described by a five-element tuple: 
 
 Defined the states as follow:
 
-![](https://latex.codecogs.com/gif.latex?s_0=Start,%20s_1=Authentication,%20s_2=Key\%20exchange,%20s_3=Running)
+![](https://latex.codecogs.com/gif.latex?s_0=Start,%20s_1=Authentication,%20s_2=Key\\%20exchange,%20s_3=Running)
 
 
 Defined the input or symbols as follow:
 
-![](https://latex.codecogs.com/gif.latex?c_0=Start\%20authenicating,%20c_1=Authentication\%20failed\%20or\%20timeout,%20c_2=Start\%20key\%20exchange,%20c_3=Key\%20exchange\%20failed\%20or\%20timeout,%20c_4=Key\%20exchange\%20success,%20c_5=Send\%20the\%20payload)
+![](https://latex.codecogs.com/gif.latex?c_0=Start\\%20authenicating,%20c_1=Authentication\\%20failed\\%20or\\%20timeout,%20c_2=Start\\%20key\\%20exchange,%20c_3=Key\\%20exchange\\%20failed\\%20or\\%20timeout,%20c_4=Key\\%20exchange\\%20success,%20c_5=Send\\%20the\\%20payload)
 
 ![](https://latex.codecogs.com/gif.latex?Q=\{%20s_0,%20s_1,%20s_2,%20s_3\}) 
 

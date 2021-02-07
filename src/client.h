@@ -25,6 +25,8 @@ static void client_write(uv_write_t *req, int status);
 static void on_close(uv_handle_t *handle);
 static void on_connect(uv_connect_t* req, int status);
 static void * utun_read_process(void* args);
+static void dfa_cb(int before, int after, int condition, void* arg);
+static void send_auth_req_pkt();
 
 int client_loop(struct config conf) ;
 

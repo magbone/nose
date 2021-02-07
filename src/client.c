@@ -61,6 +61,9 @@ on_connect(uv_connect_t* req, int status)
       }
       fprintf(stdout, "[INFO] Connect to remote server\n");
       uv_read_start((uv_stream_t *)&client, alloc_buffer, read_cb);
+
+      //Send Authenication packet
+      
 }
 
 static void *
@@ -82,6 +85,28 @@ utun_read_process(void *args)
             }
       }
 }
+
+static void
+dfa_cb(int before, int after, int condition, void* arg)
+{
+      switch(after)
+      {
+            case S_START:
+                  break;
+            case S_AUTHEN:
+                 
+                  break;
+            case S_KEY_EX:
+                  break;
+      }
+
+      switch(condition)
+      {
+            case C_START_KEYEXC:
+                  break;
+      }
+}
+
 int client_loop(struct config conf)
 {
       _conf = conf;
@@ -101,7 +126,7 @@ int client_loop(struct config conf)
       }     
 
       init_dfa(dfa_handler, (int **)state_matrix, STATE_M, S_START);
-
+      dfa_state_change_listener(dfa_handler, dfa_cb, NULL);
       loop = uv_default_loop();
       uv_tcp_init(loop, &client);
 

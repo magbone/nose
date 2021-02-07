@@ -79,3 +79,10 @@ combine_ser_chall_id(char *s_key, int challenge, int id, char *output)
       return (strlen(s_key) + 2 + 2);
 }
 
+void 
+gen_random_int(int *value, int length)
+{
+      int max = 1 << length - 1;
+      srand((unsigned)time(NULL));
+      *value = rand() % max;
+}

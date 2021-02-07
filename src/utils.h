@@ -17,7 +17,7 @@ void gen_sha256(char *input, size_t len, char *output);
 
 int combine_ser_chall_id(char *s_key, int challenge, int id, char* output);
 
-
+void gen_random_int(int *value, int length);
 
 #endif // !_UTILS_H_
 
