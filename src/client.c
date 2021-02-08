@@ -11,9 +11,8 @@
 static void 
 on_close(uv_handle_t *handle)
 {
-      // The following code will trigger the error of pointer being freed was not allocated
-      // if (handle != NULL)
-      //       free(handle);
+      if (handle != NULL)
+            free(handle);
 }
 
 static void 
@@ -60,7 +59,7 @@ on_connect(uv_connect_t* req, int status)
             return;
       }
       fprintf(stdout, "[INFO] Connect to remote server\n");
-      uv_read_start((uv_stream_t *)&client, alloc_buffer, read_cb);
+      uv_read_start((uv_stream_t *)client, alloc_buffer, read_cb);
 
       //Send Authenication packet
       
@@ -74,11 +73,11 @@ utun_read_process(void *args)
             char buffer[2 * BUFSIZ];
             memset(buffer, 0, 2 * BUFSIZ);
             int ret;
-            uv_stream_t * stream = (uv_stream_t *)&client;
+            uv_stream_t * stream = (uv_stream_t *)client;
             if ((ret = utun_read(_conf.utun_fd, buffer)) > 0){
                   write_req_t *req = (write_req_t *)malloc(sizeof(write_req_t));
                   req->buf = uv_buf_init(buffer, ret);
-                  if((ret = uv_write((uv_write_t *)req, (uv_stream_t *)&client, &req->buf, 1, client_write)) < 0)
+                  if((ret = uv_write((uv_write_t *)req, (uv_stream_t *)client, &req->buf, 1, client_write)) < 0)
                   {
                         printf("[ERROR] %s\n", uv_strerror(ret));
                   } 
@@ -127,17 +126,24 @@ int client_loop(struct config conf)
 
       init_dfa(dfa_handler, (int **)state_matrix, STATE_M, S_START);
       dfa_state_change_listener(dfa_handler, dfa_cb, NULL);
+      
       loop = uv_default_loop();
-      uv_tcp_init(loop, &client);
+      client = (uv_tcp_t *)malloc(sizeof(uv_tcp_t));
+      if (client == NULL)
+      {
+            fprintf(stderr, "[ERROR] Malloc error\n");
+            return (ERROR);
+      }
+      uv_tcp_init(loop, client);
 
       struct sockaddr_in addr;
       uv_connect_t *connect = (uv_connect_t *)malloc(sizeof(uv_connect_t));
 
       uv_ip4_addr(_conf.server_host, _conf.server_port, &addr);
 
-      int ret = uv_tcp_connect(connect, &client, (const struct sockaddr *)&addr, on_connect);
+      int ret = uv_tcp_connect(connect, client, (const struct sockaddr *)&addr, on_connect);
 
-      uv_stream_t * stream = (uv_stream_t *)&client; 
+      uv_stream_t * stream = (uv_stream_t *)client; 
       if(ret)
       {
             fprintf(stderr, "[ERROR] Connect error: %s\n", uv_strerror(ret));

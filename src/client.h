@@ -12,7 +12,7 @@
 #include <uv.h>
 
 static uv_loop_t *loop;
-static uv_tcp_t client;
+static uv_tcp_t *client;
 static struct config _conf;
 static dfa* dfa_handler;
 
