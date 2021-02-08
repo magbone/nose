@@ -2,6 +2,8 @@
 #ifndef _DFA_STATE_H
 #define _DFA_STATE_H
 
+#include "nose.h"
+
 #define STATE_M 5
 
 #define S_START   1
@@ -15,6 +17,26 @@
 #define C_KEY_EXEC_FAILED     4
 #define C_KEY_EXEC_SUCCESS    5
 #define C_SEND_PAY_LOAD       6
+
+const char *S_STR[] = {
+      NULL,
+      "Start",
+      "Authentication",
+      "Key exchange",
+      "Run",
+      NULL
+};
+
+const char *C_STR[] = {
+      NULL,
+      "Start authenticating",
+      "Authentication failed or tiemout",
+      "Start key exchange",
+      "Key exchange failed or timeout",
+      "Key echange success",
+      "Send the payload",
+      NULL
+};
 
 int state_matrix[STATE_M][STATE_M] = {{0       , S_START        , S_AUTHEN         , S_KEY_EX      , S_RUN             }, 
                                       {S_START , 0              , C_START_AUTHEN   , 0             , 0                 },

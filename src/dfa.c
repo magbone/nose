@@ -17,12 +17,17 @@
 */
 
 int 
-init_dfa(dfa* dfa_handler, int **matrix, int m, int begin_state)
+init_dfa(dfa* dfa_handler, int *matrix, int m, int begin_state)
 {
       if (dfa_handler == NULL) return (ERROR);
 
       dfa_handler->matrix = malloc(sizeof(int) * m * m);
-      memcpy(dfa_handler, matrix, m * m);
+      
+      // Copy the array
+      for (int i = 0; i < m; i++)
+            for (int j = 0; j < m; j++)
+                  *(dfa_handler->matrix + i * m + j) = *(matrix + i * m + j);
+      
       dfa_handler->m = m;
       dfa_handler->current_state = begin_state;
       return (OK);
@@ -50,14 +55,14 @@ set_next_dfa_state(dfa *dfa_handler, int condition)
       // Column first
       for (int col = 1; col < dfa_handler->m; col++)
       {
-            if (*(*(dfa_handler->matrix + 0) + col) == dfa_handler->current_state)
+            if (*(dfa_handler->matrix + 0 * dfa_handler->m + col) == dfa_handler->current_state)
             {
                   for(int line = 1; line < dfa_handler->m; line++)
                   {
-                        if (*(*(dfa_handler->matrix + line ) + col) == condition)
+                        if (*(dfa_handler->matrix + line * dfa_handler->m + col) == condition)
                         {
                               int old_state = dfa_handler->current_state;
-                              dfa_handler->current_state = *(*(dfa_handler->matrix + line ) + 0);
+                              dfa_handler->current_state = *(dfa_handler->matrix + line * dfa_handler->m + 0);
 
                               if (dfa_handler->call_back != NULL)
                                     dfa_handler->call_back(old_state, dfa_handler->current_state, condition, dfa_handler->cb_arg);
@@ -67,18 +72,17 @@ set_next_dfa_state(dfa *dfa_handler, int condition)
                   }
             }
       }
-
       // Line first
       for (int line = 1; line < dfa_handler->m; line++)
       {
-            if (*(*(dfa_handler->matrix + line) + 0) == dfa_handler->current_state)
+            if (*(dfa_handler->matrix + line * dfa_handler->m + 0) == dfa_handler->current_state)
             {
                   for(int col = 1; col < dfa_handler->m; col++)
                   {
-                        if (*(*(dfa_handler->matrix + line) + col) == condition)
+                        if (*(dfa_handler->matrix + line * dfa_handler->m + col) == condition)
                         {
                               int old_state = dfa_handler->current_state;
-                              dfa_handler->current_state = *(*(dfa_handler->matrix + 0) + col);
+                              dfa_handler->current_state = *(dfa_handler->matrix + 0 * dfa_handler->m + col);
 
                               if (dfa_handler->call_back != NULL)
                                     dfa_handler->call_back(old_state, dfa_handler->current_state, condition, dfa_handler->cb_arg);

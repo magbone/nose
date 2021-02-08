@@ -5,7 +5,7 @@
 
 typedef struct 
 {
-      int **matrix;
+      int *matrix;
       int m;
       int current_state;
 
@@ -14,7 +14,7 @@ typedef struct
 }dfa;
 
 
-int init_dfa(dfa* dfa_handler, int **matrix, int m, int begin_state);
+int init_dfa(dfa* dfa_handler, int *matrix, int m, int begin_state);
 
 int get_current_dfa_state(dfa *dfa_handler);
 
