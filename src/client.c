@@ -3,6 +3,9 @@
 #include "client.h"
 #include "device.h"
 #include "utils.h"
+#include "timer.h"
+#include "auth.h"
+#include "protocols.h"
 #include "dfa_state.h"
 
 #include <unistd.h>
@@ -62,7 +65,8 @@ on_connect(uv_connect_t* req, int status)
       uv_read_start((uv_stream_t *)client, alloc_buffer, read_cb);
 
       //Send Authenication packet
-      
+      set_next_dfa_state(dfa_handler, C_START_AUTHEN);
+      set_timeout(1, send_auth_req_pkt, NULL);
 }
 
 static void *
@@ -106,6 +110,37 @@ dfa_cb(int before, int after, int condition, void* arg)
       }
 }
 
+static void * 
+send_auth_req_pkt(void* args)
+{
+      return NULL;
+}
+
+static int 
+pkt_unpack(char *buffer, int len)
+{
+      if (len < sizeof(struct vpn_proto_header))
+            return (ERROR);
+      
+      struct vpn_proto_header *header = (struct vpn_proto_header *)buffer;
+      switch(header->type)
+      {
+            case AUTH:
+                  if (get_current_dfa_state(dfa_handler) != S_AUTHEN)
+                        return (ERROR);
+                  
+                  if (len < AUTH_REQ_LEN || len < AUTH_RSP_LEN)
+                        return (ERROR);
+                  
+                  // Clear the send task
+                  clear_timeout(timer_id);
+                  break;
+      
+      }
+
+      return (OK);
+}
+
 int client_loop(struct config conf)
 {
       _conf = conf;
@@ -124,7 +159,7 @@ int client_loop(struct config conf)
             return (ERROR);
       }     
 
-      init_dfa(dfa_handler, (int **)state_matrix, STATE_M, S_START);
+      init_dfa(dfa_handler, *state_matrix, STATE_M, S_START);
       dfa_state_change_listener(dfa_handler, dfa_cb, NULL);
       
       loop = uv_default_loop();
