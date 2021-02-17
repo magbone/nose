@@ -132,10 +132,28 @@ pkt_unpack(char *buffer, int len)
                   if (len < AUTH_REQ_LEN || len < AUTH_RSP_LEN)
                         return (ERROR);
                   
+                  if (header->code == AUTH_REQ)
+                  {
+                        // TODO send the authentication response.
+                        break;
+                  }
+                  struct auth_rsp_pkt *rsp = (struct auth_rsp_pkt *)(buffer + sizeof(struct vpn_proto_header));
+
+                  if (rsp->message_code == SUCCESS)
+                        set_next_dfa_state(dfa_handler, C_START_KEYEXC);
+                  else
+                  {
+                        set_next_dfa_state(dfa_handler, C_AUTHEN_FAILED);
+                        return (FAILED);
+                  }
                   // Clear the send task
                   clear_timeout(timer_id);
                   break;
-      
+
+            case KEY_NEG:
+                  break;
+            case APP_DATA:
+                  break;
       }
 
       return (OK);

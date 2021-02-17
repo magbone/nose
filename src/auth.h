@@ -19,6 +19,9 @@ struct auth_req_pkt
       u_int8_t hash[64];
 };
 
+
+// Definitions of message code field.
+
 #define FAILURE 0 
 #define SUCCESS 1
 
