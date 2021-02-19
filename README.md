@@ -16,6 +16,7 @@ A simple VPN implement over p2p
  +---------+        +-------------+                                                                                     +-------------+       +--------+
 ```
 
+**Note**: This project uses a host assigned a public net address as a trunking server instead of p2p traversal through complex NATs models. This can make the whole process more easy but burden the server much more pressure for transmitting the data from the two sides.
 ## Project requirements
 This project built depends on some third party open sources.
 
