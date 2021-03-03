@@ -1,7 +1,7 @@
 # nose (Graduate Design)
-A simple VPN implement over p2p.
+Design and Implementation of VPN based on p2p network.
 
-
+cd
 
 ## Project structure
 
