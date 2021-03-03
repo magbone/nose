@@ -1,7 +1,6 @@
 # nose (Graduate Design)
 Design and Implementation of VPN based on p2p network.
 
-cd
 
 ## Project structure
 
