@@ -19,10 +19,11 @@ check_mode_argus(struct config conf)
                   conf.server_port > 0;
       else return conf.server_host != NULL && conf.server_port > 0;
 } 
+
 void 
 print_usage()
 {
-      printf("nose is a very simple VPN implement over p2p\n\n"
+      printf("nose is a very simple VPN implementation based on p2p\n\n"
              "Usage: nose [server|client] \n"
              "  -l IP address assigned to the utun interface of local machine\n"
              "  -r IP address assigned to the other peer of p2p\n"
@@ -40,10 +41,7 @@ int
 main(int argc, char *argv[])
 {
       if (argc <= 1)
-      {
-            print_usage();
-            return 0;
-      }
+            goto usage;
 
       struct config conf;
       memset(&conf, 0, sizeof(struct config));
@@ -58,7 +56,7 @@ main(int argc, char *argv[])
                   if (!address || !is_valid_ip_address(address))
                   {
                         printf("Invalid argument: %s\n", address);
-                        return (FAILED);
+                        goto usage;
                   }
                   conf.local_host = address;
             }
@@ -68,7 +66,7 @@ main(int argc, char *argv[])
                   if (!address || !is_valid_ip_address(address))
                   {
                         printf("Invalid argument: %s\n", address);
-                        return (FAILED);
+                        goto usage;
                   }
                   conf.remote_host = address;
             }
@@ -78,7 +76,7 @@ main(int argc, char *argv[])
                   if (!address ||!is_valid_ip_address(address))
                   {
                         printf("Invalid argument: %s\n", address);
-                        return (FAILED);
+                        goto usage;
                   }
                   conf.server_host = address;
             }
@@ -89,7 +87,7 @@ main(int argc, char *argv[])
                   if (!port_str || !(port = atoi(port_str)))
                   {
                         printf("Invalid argument: %s\n", port_str);
-                        return (FAILED);
+                        goto usage;
                   }
                   conf.server_port = port;
             }
@@ -99,6 +97,7 @@ main(int argc, char *argv[])
                   if (!key)
                   {
                         printf("Invalid argument: %s\n", key);
+                        goto usage;
                   }
                   char hash[64];
                   gen_sha256(key, strlen(key), hash);
@@ -110,7 +109,7 @@ main(int argc, char *argv[])
       if (!check_mode_argus(conf))
       {
             printf("Lack some arguments\n");
-            return (FAILED);
+            goto usage;
       }
 
       char dev_name[20] = "tun0";
@@ -141,5 +140,8 @@ main(int argc, char *argv[])
             fprintf(stdout, "[INFO] Run as server mode\n");
             return server_loop(conf);
       }
+
+      usage:
+            print_usage();
       return 0;
 }

@@ -1,5 +1,5 @@
 # nose (Graduate Design)
-Design and Implementation of VPN based on p2p network.
+Design and implementation of VPN based on p2p network.
 
 
 ## Project structure
@@ -29,7 +29,7 @@ mbedtls 2.25.0
 ## Command line usage
 
 ```
-nose is a very simple VPN implement over p2p
+nose is a very simple VPN implementation over p2p
 
 Usage: nose [server|client] 
   -l IP address assigned to the utun interface of local machine
@@ -53,7 +53,7 @@ For the client, the program should be run as superuser or other users which are 
 
 ## VPN protocol(draft)
 ###  Preface
-Comparing with serveral famous VPN protocol——PPP, PPTP, SSL VPN, etc. and learning their natures and features, I finally present a relatively simple and available VPN protocol(Under daft) conbined with respectively advantages, including the **Authentiction** and **Encryption** which both meet the almost application scene for safety and protection.
+Comparing with serveral famous VPN protocol——PPP, PPTP, SSL VPN, etc. and learning their natures and features, I finally present a relatively simple and available VPN protocol(Under consideration) conbined with respectively advantages, including the **Authentiction** and **Encryption** which both meet the almost application scene for safety and protection.
 
 ### Authentication
 It references from CHAP, Challenge-Handshake Authentication Protocol, which is applied in Point-to-Point Protocol(PPP). And I omit the previous Link Control Protocol for exchanging the id bewteen two sides, and use the random number to generate the id and challenge. Like CHAP, the whole process vertifies the identity of the client by using a there-way handshake. The vertifiction is based on a shared secret previously negotiated.
@@ -63,7 +63,7 @@ It references from CHAP, Challenge-Handshake Authentication Protocol, which is a
 ### Encryption 
 
 ### Packet format
-I define the commom VPN protocol header for **Authentiction**, **Key negotiation**, and **Encrypted payload**. The specific format lists as follows.
+I define the commom VPN protocol header for **Authentication**, **Key negotiation**, and **Encrypted payload**. The specific format lists as follows.
  
 ```
  0                   1                   2                   3
