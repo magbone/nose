@@ -3,6 +3,8 @@
 #include "timer.h"
 
 #include <unistd.h>
+#include <signal.h>
+
 
 int 
 set_timeout(int sec, void* (*func)(void *args), void *args)
@@ -15,6 +17,11 @@ set_timeout(int sec, void* (*func)(void *args), void *args)
             t_val->next = NULL;
       }
 
+      if (! terminated_handled)
+      {
+            signal(SIGINT, handle_sig);
+            terminated_handled = ! terminated_handled;
+      }
       struct time_val *new_val = (struct time_val *)malloc(sizeof(struct time_val));
 
       if (new_val == NULL) return (ERROR);
@@ -62,6 +69,20 @@ call_func(void *val)
       return NULL;
 }
 
+static void
+handle_sig(int sig)
+{
+      if (sig == SIGINT)
+      {
+            while (t_val->next != NULL)
+                  clear_timeout(t_val->next->time_id);
+
+            if (t_val)
+                  free(t_val);
+            pid_t now_pid = getpid();
+            kill(now_pid, SIGQUIT);
+      }
+}
 
 int 
 clear_timeout(int time_id)

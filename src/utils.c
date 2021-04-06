@@ -65,6 +65,9 @@ gen_sha256(char *input, size_t len, char *output)
       output[64] = 0;
 }
 
+/**
+ *  Combine secret, challenge and id.
+*/
 int 
 combine_ser_chall_id(char *s_key, int challenge, int id, char *output)
 {
@@ -82,7 +85,21 @@ combine_ser_chall_id(char *s_key, int challenge, int id, char *output)
 void 
 gen_random_int(int *value, int length)
 {
-      int max = 1 << length - 1;
+      int max = (1 << length) - 1;
       srand((unsigned)time(NULL));
       *value = rand() % max;
+}
+
+void 
+gen_random_node_id(char *node_id)
+{
+
+      const char base[] = {"0123456789abcdefghijklmnopqrstuvwxyz"};
+      srand((unsigned)time(NULL));
+      if (node_id == NULL)
+            return;
+      
+      for (int i = 0; i < 20; i++)
+            node_id[i] = base[rand() % strlen(base)];
+      node_id[20] = '\0';
 }

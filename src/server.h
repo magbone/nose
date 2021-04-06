@@ -21,8 +21,9 @@ static uv_tcp_t * get_other_client(uv_tcp_t *client);
 
 
 void alloc_buffer(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf);
-static void on_close(uv_handle_t *handle);
 void free_write_req(uv_write_t *req);
+
+static void on_close(uv_handle_t *handle);
 static void forwarding_write(uv_write_t *req, int status);
 static void forwarding_read(uv_stream_t *client, ssize_t nread, const uv_buf_t *buf);
 static void on_new_connection(uv_stream_t *server, int status);
