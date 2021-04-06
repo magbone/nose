@@ -6,12 +6,15 @@ APPS = \
 	pcap_test\
 	sha256_test\
 	time_test\
-	tun_test
+	tun_test\
+	bucket_test\
+	master_peer_test\
+	pmp_test
 
 # End of APPS
 
 
-all:crypt_test dfa_test pcap_test time_test tun_test sha256_test
+all:crypt_test dfa_test pcap_test time_test tun_test sha256_test bucket_test master_peer_test pmp_test
 
 
 crypt_test: 
@@ -32,6 +35,14 @@ tun_test:
 sha256_test:
 	cc sha256_test.c ../src/utils.c -lssl -lcrypto -o sha256_test -w
 
+bucket_test:
+	cc bucket_test.c ../src/bucket.c ../src/utils.c -lssl -lcrypto -o bucket_test -w
+
+master_peer_test:
+	cc master_peer_test.c ../src/server.c ../src/master_peer.c ../src/bucket.c ../src/timer.c -luv -o master_peer_test
+
+pmp_test:
+	cc pmp_test.c ../src/pmp.c -o pmp_test
 clean: 
 	rm -rf $(APPS)
 

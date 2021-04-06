@@ -13,13 +13,12 @@ void * test(void *args)
 
 int main()
 {
-      int time_id = set_timeout(1, test, NULL);
-      printf("time_id: %d\n", time_id);
-      sleep(10);
-      clear_timeout(time_id);
-      time_id = set_timeout(1, test, NULL);
-      printf("time_id: %d\n", time_id);
-      sleep(10);
-      clear_timeout(time_id);
+      int time_id1 = set_timeout(1, test, NULL);
+      printf("time_id: %d\n", time_id1);
+      int time_id2 = set_timeout(1, test, NULL);
+      printf("time_id: %d\n", time_id2);
+      sleep(30);
+      clear_timeout(time_id1);
+      clear_timeout(time_id2);
       return 0;
 }
