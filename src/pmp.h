@@ -39,7 +39,7 @@ typedef struct PMP_discovery_rsp
 typedef struct PMP_options
 {
       u_int16_t port;
-      u_int16_t reverse;
+      u_int16_t reserve;
       u_int32_t ipv4;
       u_int8_t node_id[20];
 }PMP_options_t;
@@ -47,7 +47,7 @@ typedef struct PMP_options
 typedef struct PMP_ping_req
 {
       struct PMP_Header header;
-      u_int16_t reverse;
+      u_int16_t reserve;
       u_int8_t target_id[20];
       u_int8_t source_id[20];
 }PMP_ping_req_t;

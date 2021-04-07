@@ -32,7 +32,7 @@ PMP_discovery_rsp_pkt(char *target_id, struct bucket_item *items, int size, char
       PMP_options_t *opt = (PMP_options_t *)malloc(sizeof(PMP_options_t));
       int len = 0;
 
-      if (drsp == NULL || buf == NULL || opt) return (ERROR);
+      if (drsp == NULL || buf == NULL || opt == NULL) return (ERROR);
 
       drsp->header.type = DISC;
       drsp->header.code = RSP;
@@ -45,8 +45,9 @@ PMP_discovery_rsp_pkt(char *target_id, struct bucket_item *items, int size, char
 
       for (int i = 0; i < size; i++)
       {
-            opt->port = (items + i)->port;
+            opt->port = htons((items + i)->port);
             opt->ipv4 = inet_addr((items + i)->ipv4);
+            printf("%04x\n", opt->ipv4);
             memcpy(opt->node_id, (items + i)->node_id, 20);
             
             memcpy(buf + len, (char *)opt, sizeof(PMP_options_t));
@@ -67,6 +68,7 @@ PMP_ping_req_pkt(char *source_id, char *target_id, char *buf)
 
       preq->header.type = PING;
       preq->header.code = REQ;
+      preq->reserve = 0;
       memcpy(preq->source_id, source_id, 20);
       memcpy(preq->target_id, target_id, 20);
 

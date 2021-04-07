@@ -10,6 +10,7 @@ struct bucket_item
       char ipv4[16];
       char node_id[21];
       int time_id;
+      int discovery_time;
 };
 
 struct bucket

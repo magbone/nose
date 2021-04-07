@@ -1,6 +1,7 @@
 
 #include "master_peer.h"
 #include "timer.h"
+#include "pmp.h"
 
 #include <string.h>
 
@@ -21,7 +22,8 @@ static void unregistry_ping_peer(struct bucket_item *item)
       clear_timeout(item->time_id);
 }
 
-static void* ping_peer(void *item)
+static void* 
+ping_peer(void *item)
 {
       if (item == NULL) return NULL;
 
@@ -31,6 +33,21 @@ static void* ping_peer(void *item)
       return NULL;
 }
 
+static void* 
+discovery_proc(void *bucket)
+{
+      if (bucket == NULL) return NULL;
+
+      struct bucket *b = (struct bucket *)bucket;     
+      struct bucket_item item = get_front_bucket(b);
+
+      char buf[1024];
+      int len = PMP_discovery_req_pkt(item.port, "aaaaaaaaaaaaaaaaaaaa", item.node_id, buf);
+      
+
+
+      return NULL;
+}
 int 
 init_master_peer(struct master_peer *mstp, char *ipv4, int port, struct bucket_item *items, int item_size)
 {

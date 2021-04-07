@@ -25,6 +25,7 @@ static void registry_ping_peer(struct bucket_item *item);
 static void unregistry_ping_peer(struct bucket_item *item);
 
 static void* ping_peer(void *item);
+static void* discovery_proc(void *bucket);
 
 int init_master_peer(struct master_peer *mstp, char *ipv4, int port, struct bucket_item *items, int item_size);
 int master_peer_loop(struct master_peer *mstp);

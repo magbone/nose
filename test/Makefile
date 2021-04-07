@@ -9,12 +9,13 @@ APPS = \
 	tun_test\
 	bucket_test\
 	master_peer_test\
-	pmp_test
+	pmp_test\
+	udp_test
 
 # End of APPS
 
 
-all:crypt_test dfa_test pcap_test time_test tun_test sha256_test bucket_test master_peer_test pmp_test
+all:crypt_test dfa_test pcap_test time_test tun_test sha256_test bucket_test master_peer_test pmp_test udp_test
 
 
 crypt_test: 
@@ -42,7 +43,11 @@ master_peer_test:
 	cc master_peer_test.c ../src/server.c ../src/master_peer.c ../src/bucket.c ../src/timer.c -luv -o master_peer_test
 
 pmp_test:
-	cc pmp_test.c ../src/pmp.c -o pmp_test
+	cc pmp_test.c ../src/pmp.c ../src/bucket.c  -o pmp_test
+
+udp_test:
+	cc udp_test.c ../src/udp.c ../src/pmp.c ../src/bucket.c -o udp_test
+
 clean: 
 	rm -rf $(APPS)
 

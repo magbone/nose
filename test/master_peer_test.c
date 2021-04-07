@@ -1,10 +1,11 @@
 #include "../src/master_peer.h"
 
 
-int main()
+int main(int argc, char ** argv)
 {
+
       char ipv4[] = "127.0.0.1";
-      int port = 9987;
+      int port = 9998;
       struct master_peer mstp;
       struct bucket_item item[] = {
             {
