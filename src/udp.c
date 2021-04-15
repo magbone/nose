@@ -16,10 +16,10 @@ send_udp_pkt(struct udp_handler * handler, char *dst_host, int port, int timeout
       if ((sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) return (ERROR);
 
       struct timeval tv;
-      tv.tv_sec = 1;
+      tv.tv_sec = timeout;
       tv.tv_usec = 0;
 
-      if (setsockopt(sockfd, SOL_SOCKET, SO_RCVLOWAT, &tv, sizeof(tv)) < 0)
+      if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0)
             return (ERROR);
       
       if (sendto(sockfd, buf, size, 0, (struct sockaddr *)&addr, addr_len) < 0)

@@ -93,16 +93,14 @@ function p_pmp_dissector(buf, pkt, tree)
                   end
             end
       elseif v_type == 1 then
-            if v_code == 0 then
-                  local v_rev = buf(2, 2):uint()
-                  local v_tid  = buf(4, 20):string()
-                  local v_sid  = buf(24, 20):string() 
-                  t:add(buf(2, 2), "Reserve: "..v_rev)
-                  t:add(buf(4, 20), "Target ID: "..v_tid)
-                  t:add(buf(24, 20), "Source ID: "..v_sid)
+      
+            local v_rev = buf(2, 2):uint()
+            local v_tid  = buf(4, 20):string()
+            local v_sid  = buf(24, 20):string() 
+            t:add(buf(2, 2), "Reserve: "..v_rev)
+            t:add(buf(4, 20), "Target ID: "..v_tid)
+            t:add(buf(24, 20), "Source ID: "..v_sid)
             
-
-            end
       elseif v_type == 1 then
             if v_code == 0 then
                   local v_rev = buf(2, 2):uint()

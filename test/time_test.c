@@ -4,21 +4,35 @@
 
 #include <unistd.h>
 
-void * test(void *args)
+struct sub_val
 {
-      static int i = 0;
-      printf("num:%d\n", i++);
+      int p;
+};
+
+struct val
+{
+      int a;
+      void *p;
+};
+
+void * test(const void *args)
+{
+      struct val * a = (struct val *)args;
+      printf("num:%d\n", a->a++);
+      printf("%p\n", a->p);
       return NULL;
 }
 
 int main()
 {
-      int time_id1 = set_timeout(1, test, NULL);
+      struct sub_val b = {.p = 3};
+      struct val a = {.a = 0, .p = &b};
+      int time_id1 = set_timeout(1, test, &a);
       printf("time_id: %d\n", time_id1);
-      int time_id2 = set_timeout(1, test, NULL);
-      printf("time_id: %d\n", time_id2);
+      // int time_id2 = set_timeout(1, test, NULL);
+      // printf("time_id: %d\n", time_id2);
       sleep(30);
       clear_timeout(time_id1);
-      clear_timeout(time_id2);
+      // clear_timeout(time_id2);
       return 0;
 }

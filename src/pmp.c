@@ -47,7 +47,6 @@ PMP_discovery_rsp_pkt(char *target_id, struct bucket_item *items, int size, char
       {
             opt->port = htons((items + i)->port);
             opt->ipv4 = inet_addr((items + i)->ipv4);
-            printf("%04x\n", opt->ipv4);
             memcpy(opt->node_id, (items + i)->node_id, 20);
             
             memcpy(buf + len, (char *)opt, sizeof(PMP_options_t));
@@ -96,17 +95,79 @@ PMP_ping_rsp_pkt(char *source_id, char *target_id, char *buf)
       return (sizeof(PMP_ping_req_t));
 }
 
+int 
+PMP_get_peers_req_pkt(char *source_id, char *target_id, char *buf)
+{
+      if (buf == NULL || source_id == NULL || target_id == NULL)
+            return (ERROR);
+
+      PMP_get_peers_req_t* gp_req = (PMP_get_peers_req_t *)malloc(sizeof(PMP_get_peers_req_t));
+
+      if (gp_req == NULL) return (ERROR);  
+
+      memcpy(gp_req->source_id, source_id, strlen(source_id));
+      memcpy(gp_req->target_id, target_id, strlen(target_id));
+
+      free(gp_req);
+      return (sizeof(PMP_get_peers_req_t));
+}
+
+int 
+PMP_get_peers_rsp_pkt(char *target_id, struct bucket_item *items, int size, char *buf)
+{
+      int buf_size = 0;
+
+      if (target_id == NULL || items == NULL || buf == NULL || size <= 0) return (ERROR);
+
+      PMP_get_peers_rsp_t* gp_rsp = (PMP_get_peers_rsp_t *)malloc(sizeof(PMP_get_peers_rsp_t));
+      if (gp_rsp == NULL) return (ERROR);
+
+      gp_rsp->header.type = G_PS;
+      gp_rsp->header.code = RSP;
+
+      gp_rsp->count = htons(size);
+      memcpy(gp_rsp->target_id, target_id, strlen(target_id));
+      memcpy(buf, (char *)gp_rsp, sizeof(PMP_get_peers_rsp_t));
+      buf_size += sizeof(PMP_get_peers_rsp_t);
+
+      PMP_get_peers_options_t* opt = (PMP_get_peers_options_t *)malloc(sizeof(PMP_get_peers_options_t));
+
+      if (opt == NULL)
+      {
+            if (gp_rsp != NULL) free(gp_rsp);
+            return (ERROR);
+      }
+      
+      for (int i = 0; i < size; i++)
+      {
+            memcpy(opt->node_id, (items + i)->node_id, 20);
+            opt->ipv4 = inet_addr((items + i)->ipv4);
+            opt->nat_type = (items + i)->nat_type;
+            opt->port = htons((items + i)->port);
+
+            memcpy(buf + buf_size, (char *)opt, sizeof(PMP_get_peers_options_t));
+            buf_size += sizeof(PMP_get_peers_options_t);
+      }
+      
+      free(gp_rsp);
+      free(opt);
+      return (buf_size);
+}
+
 
 int 
 PMP_discovery_req_unpack(u_int16_t *port, char *source_id, char *target_id, char *buf, int size)
 {
-      if (size < sizeof(PMP_ping_req_t)) return (ERROR);
+      if (size < sizeof(PMP_discovery_req_t)) return (ERROR);
 
       PMP_discovery_req_t *dreq = (PMP_discovery_req_t *)buf;
 
-      if (strcmp((char *)dreq->target_id, source_id)) return (ERROR);
-      strncpy(target_id, (char *)dreq->source_id, 20);
+      //if (strcmp((char *)dreq->target_id, source_id)) return (ERROR);
+      strncpy(target_id, (char *)dreq->target_id, 20);
+      strncpy(source_id, (char *)dreq->source_id, 20);
 
+      target_id[20] = '\0';
+      source_id[20] = '\0';
       *port = dreq->port;
       return (OK);
 }
@@ -134,7 +195,7 @@ PMP_discovery_rsp_unpack(char *source_id, struct bucket *b, char *buf, int size)
             in.s_addr = opt->ipv4;
             char *ipv4 = inet_ntoa(in);
             memcpy(item.ipv4, ipv4, strlen(ipv4));
-            push_front_bucket(b, item);
+            push_front_bucket(b, &item);
       }
       
       return (OK);
@@ -148,9 +209,17 @@ PMP_ping_req_unpack(char *source_id, char *target_id, char *buf, int size)
 
       PMP_ping_req_t *preq = (PMP_ping_req_t *)buf;
 
-      memcpy(source_id, preq->source_id, 20);
-      memcpy(target_id, preq->target_id, 20);
+      strncpy(source_id, (char *)preq->source_id, 20);
+      strncpy(target_id, (char *)preq->target_id, 20);
 
+      source_id[20] = '\0';
+      target_id[20] = '\0';
       return (OK);
 }
 
+
+int 
+PMP_get_peers_rsp_unpack(char *source_id, struct bucket *b, char *buf, int size)
+{
+ 
+}

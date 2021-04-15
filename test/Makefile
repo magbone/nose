@@ -40,7 +40,7 @@ bucket_test:
 	cc bucket_test.c ../src/bucket.c ../src/utils.c -lssl -lcrypto -o bucket_test -w
 
 master_peer_test:
-	cc master_peer_test.c ../src/server.c ../src/master_peer.c ../src/bucket.c ../src/timer.c -luv -o master_peer_test
+	cc master_peer_test.c ../src/server.c ../src/master_peer.c ../src/bucket.c ../src/timer.c ../src/udp.c ../src/pmp.c -luv -o master_peer_test -g
 
 pmp_test:
 	cc pmp_test.c ../src/pmp.c ../src/bucket.c  -o pmp_test

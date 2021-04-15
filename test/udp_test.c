@@ -22,5 +22,6 @@ int main()
       send_udp_pkt(&handler, "127.0.0.1", 9998, 5, buf, len);
       len = PMP_discovery_rsp_pkt("bbbbbbbbbbbbbbbbbbbb", items, 2, buf);
       send_udp_pkt(&handler, "127.0.0.1", 9998, 5, buf, len);
+      recv_udp_pkt(&handler, buf);
       return 0;
 }

@@ -6,12 +6,14 @@ int main(int argc, char ** argv)
 
       char ipv4[] = "127.0.0.1";
       int port = 9998;
-      struct master_peer mstp;
+      struct master_peer mstp = {
+            .node_id = "aaaaaaaaaaaaaaaaaaaa"
+      };
       struct bucket_item item[] = {
             {
-                  .node_id = "hellworld",
+                  .node_id = "bbbbbbbbbbbbbbbbbbbb",
                   .ipv4 = "127.0.0.1",
-                  .port = 9996
+                  .port = 9998
             }
       };
       

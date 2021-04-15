@@ -1,13 +1,15 @@
 
 #include "nose.h"
 #include "timer.h"
+// #include "bucket.h"
+// #include "master_peer.h"
 
 #include <unistd.h>
 #include <signal.h>
 
 
 int 
-set_timeout(int sec, void* (*func)(void *args), void *args)
+set_timeout(int sec, void* (*func)(const void *args), void *args)
 {
       if (t_val == NULL)
       {

@@ -1,6 +1,7 @@
 {
       "files.associations": {
             "internet": "c",
-            "netfwd": "c"
+            "netfwd": "c",
+            "pmp.h": "c"
       }
 }
