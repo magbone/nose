@@ -14,12 +14,8 @@ struct master_peer
       char node_id[21];
 
       int discovery_timeid;
-};
-
-struct callback_args
-{
-      const struct master_peer * param1;
-      const struct bucket_item * param2;
+      int ping_timeid;
+      int get_peers_timeid;
 };
 
 static uv_loop_t loop;
@@ -31,11 +27,12 @@ extern void alloc_buffer(uv_handle_t *handle, size_t suggested_size, uv_buf_t *b
 
 static void on_read(uv_udp_t* handle, ssize_t nread, const uv_buf_t* buf, const struct sockaddr* addr, unsigned flags);
 
-static void registry_ping_peer(struct bucket_item *item);
-static void unregistry_ping_peer(struct bucket_item *item);
+// void registry_ping_peer(struct bucket_item *item);
+// void unregistry_ping_peer(struct bucket_item *item);
 
-static void* ping_peer(const void *item);
+void* ping_peer(const void *item);
 static void* discovery_proc(const void *bucket);
+static void* get_peers(const void *bucket);
 
 static void shutdown_master_peer();
 

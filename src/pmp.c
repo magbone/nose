@@ -105,9 +105,13 @@ PMP_get_peers_req_pkt(char *source_id, char *target_id, char *buf)
 
       if (gp_req == NULL) return (ERROR);  
 
+      gp_req->header.type = G_PS;
+      gp_req->header.code = REQ;
+      gp_req->reserve = 0;
       memcpy(gp_req->source_id, source_id, strlen(source_id));
       memcpy(gp_req->target_id, target_id, strlen(target_id));
-
+      
+      memcpy(buf, (char *)gp_req, sizeof(PMP_get_peers_req_t));
       free(gp_req);
       return (sizeof(PMP_get_peers_req_t));
 }
@@ -178,9 +182,9 @@ PMP_discovery_rsp_unpack(char *source_id, struct bucket *b, char *buf, int size)
       if (size < sizeof(PMP_discovery_req_t)) return (ERROR);
       PMP_discovery_rsp_t *drsp = (PMP_discovery_rsp_t *)buf;
 
-      if (strncpy(source_id, (char *)drsp->target_id, 20)) return (ERROR);
+      // if (strncpy(source_id, (char *)drsp->target_id, 20)) return (ERROR);
 
-      int count = drsp->count;
+      const int count = drsp->count;
       int offset = sizeof(PMP_discovery_rsp_t);
       struct bucket_item item; 
 
@@ -196,6 +200,7 @@ PMP_discovery_rsp_unpack(char *source_id, struct bucket *b, char *buf, int size)
             char *ipv4 = inet_ntoa(in);
             memcpy(item.ipv4, ipv4, strlen(ipv4));
             push_front_bucket(b, &item);
+            offset += sizeof(PMP_options_t);
       }
       
       return (OK);
@@ -221,5 +226,28 @@ PMP_ping_req_unpack(char *source_id, char *target_id, char *buf, int size)
 int 
 PMP_get_peers_rsp_unpack(char *source_id, struct bucket *b, char *buf, int size)
 {
- 
+      if (size < sizeof(PMP_get_peers_rsp_t)) return (ERROR);
+
+      PMP_get_peers_rsp_t* gp_rsp = (PMP_get_peers_rsp_t *)buf;
+      const int count = gp_rsp->count;
+      struct bucket_item item;
+
+      if (size < sizeof(PMP_get_peers_rsp_t) + sizeof(PMP_get_peers_options_t) * count) return (ERROR);
+
+      buf += sizeof(PMP_get_peers_rsp_t);
+
+      for (int i = 0; i < count; i++)
+      {
+            PMP_get_peers_options_t *gp_opt = (PMP_get_peers_options_t *)buf;
+            item.port = gp_opt->port;
+            item.nat_type = gp_opt->nat_type;
+            memcpy(item.node_id, gp_opt->node_id, 20);
+            struct in_addr in;
+            in.s_addr = gp_opt->ipv4;
+            char *ipv4 = inet_ntoa(in);
+            memcpy(item.ipv4, ipv4, strlen(ipv4));
+            buf += sizeof(PMP_get_peers_options_t);
+      }
+      
+      return (OK);
 }

@@ -10,6 +10,7 @@ void
 init_bucket(struct bucket *bkt, struct bucket_item *init_items, int init_items_size)
 {
       bkt->top = -1;
+      bkt->visited = 0;
 
       if (bkt == NULL || init_items == NULL) return;
 
@@ -54,7 +55,7 @@ get_top_bucket_items(struct bucket *bkt, struct bucket_item *item, int size)
       if (bkt == NULL || item == NULL) return 0;
 
       int r_size = 0;
-      
+
       pthread_mutex_lock(&mutex);
       r_size = size > 1 + bkt->top ? bkt->top + 1: size;
 
@@ -69,7 +70,7 @@ struct bucket_item *
 get_front_bucket(struct bucket *bkt)
 {
       pthread_mutex_lock(&mutex);
-      struct bucket_item *item = *(bkt->b) + bkt->top;
+      struct bucket_item *item = bkt->top == -1 ? NULL : *(bkt->b) + bkt->top;
       pthread_mutex_unlock(&mutex);
       return item;
 }
@@ -83,12 +84,27 @@ get_back_bucket(struct bucket *bkt)
       return item;
 }
 
+struct bucket_item *
+get_next_bucket_item(struct bucket *bkt)
+{
+
+      pthread_mutex_lock(&mutex);
+      struct bucket_item *item = NULL;
+
+      bkt->visited %= (bkt->top + 1);
+      item = bkt->b[bkt->visited++]; 
+
+      pthread_mutex_unlock(&mutex);
+      return item;
+}
+
+
 void 
 pop_front_bucket(struct bucket *bkt)
 {
       pthread_mutex_lock(&mutex);
       if (bkt->top >= 0)
-            bkt->top--;
+            bkt->b[bkt->top--] = NULL;
       pthread_mutex_unlock(&mutex);
 }
 

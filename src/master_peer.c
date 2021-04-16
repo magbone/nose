@@ -17,7 +17,7 @@ const struct sockaddr* addr, unsigned flags)
       char source_id[21], target_id[21], b[BUFSIZ];
       struct bucket_item items[256];
       u_int16_t port;
-      int len = 0;
+      int len = 0, size = 0;
 
 
       if (nread > sizeof(struct PMP_Header))
@@ -47,12 +47,20 @@ const struct sockaddr* addr, unsigned flags)
                               return;
                         }
                         fprintf(stdout, "[INFO] Received master peer discovery from %s\n", source_id);
-                        int size = get_top_bucket_items(&_mstp->master_peer_bkt, items, 10);
+                        size = get_top_bucket_items(&_mstp->master_peer_bkt, items, 10);
                         len = PMP_discovery_rsp_pkt(_mstp->node_id, items, size, b);
                         break;
                   case G_PS:
+                        if (PMP_get_peers_req_unpack(source_id, target_id, buf->base, nread) == ERROR)
+                        {
+                              fprintf(stderr, "[ERROR] Malformation PMP get peers request packet received\n");
+                              return; 
+                        }
+
+                        fprintf(stdout, "[INFO] Received master peer get peers from %s\n", source_id);
+                        size = get_top_bucket_items(&_mstp->peer_bkt, items, 10);
+                        len = PMP_get_peers_rsp_pkt(source_id, items, size, b);
                         break;
-                  
                   default:
                         break;
                   }
@@ -83,30 +91,31 @@ const struct sockaddr* addr, unsigned flags)
 
 }
 
-static void 
-registry_ping_peer(struct bucket_item *item)
-{
-      
+// void 
+// registry_ping_peer(struct bucket_item *item)
+// {
+//       fprintf(stdout, "[INFO] Registry ping peer: node_id %s\n", item->node_id);
+//       item->time_id = set_timeout(3, ping_peer, item);
+// }
 
-      fprintf(stdout, "[INFO] Registry ping peer: node_id %s\n", item->node_id);
-      item->time_id = set_timeout(3, ping_peer, item);
-}
+// void 
+// unregistry_ping_peer(struct bucket_item *item)
+// {
+//       fprintf(stdout, "[INFO] Unregistry ping peer: node_id %s\n", item->node_id);
+//       clear_timeout(item->time_id);
+// }
 
-static void 
-unregistry_ping_peer(struct bucket_item *item)
-{
-      fprintf(stdout, "[INFO] Unregistry ping peer: node_id %s\n", item->node_id);
-      clear_timeout(item->time_id);
-}
-
-static void* 
+void* 
 ping_peer(const void *args)
 {
       if (args == NULL) return NULL;
       
-      struct bucket_item *item = (struct bucket_item *)args;
+      struct bucket *b = (struct bucket *)args;
+      struct bucket_item *item = get_next_bucket_item(b);
       char buf[BUFSIZ], source_id[21], target_id[21];
       struct udp_handler uh;
+
+      if (item == NULL) return (NULL);
 
       fprintf(stdout, "[INFO] Send PMP ping request packet from %s to %s\n", _mstp->node_id, item->node_id);
 
@@ -160,18 +169,39 @@ discovery_proc(const void *bucket)
       return NULL;
 }
 
+static void* 
+get_peers(const void *bucket)
+{
+      if (bucket == NULL) return NULL;
+
+      struct bucket *b = (struct bucket *)bucket;
+      struct bucket_item *item = get_front_bucket(b);
+      struct udp_handler uh;
+      char buf[BUFSIZ], source_id[20];
+
+      if (item == NULL) return (NULL);
+      int len = PMP_get_peers_req_pkt(_mstp->node_id, item->node_id, buf);
+      send_udp_pkt(&uh, item->ipv4, item->port, 1, buf, len);
+      len = recv_udp_pkt(&uh, buf);
+
+      if (len > 0)
+      {
+            if (PMP_get_peers_rsp_unpack(source_id, &_mstp->peer_bkt, buf, len) == OK)
+                  fprintf(stdout, "[INFO] PMP get peers reponse packet receive success\n");
+            else fprintf(stdout, "[INFO] Malformation PMP packet received\n");
+      }
+      else
+            fprintf(stdout, "[INFO] Remote master peer %s is dead\n", item->node_id);
+
+      return NULL;
+}
 static void 
 shutdown_master_peer()
 {
       if (_mstp != NULL)
       {
             clear_timeout(_mstp->discovery_timeid);
-
-            while (is_empty_bucket(&_mstp->master_peer_bkt))
-            {
-                  clear_timeout(get_front_bucket(&_mstp->master_peer_bkt)->time_id);
-                  pop_front_bucket(&_mstp->master_peer_bkt);
-            }
+            clear_timeout(_mstp->ping_timeid);
       }
 }
 
@@ -181,18 +211,17 @@ init_master_peer(struct master_peer *mstp, char *ipv4, int port, struct bucket_i
 {
       if (mstp == NULL) return (ERROR);
 
-      init_bucket(&mstp->master_peer_bkt, NULL, 0);
+      init_bucket(&mstp->master_peer_bkt, items, item_size);
       init_bucket(&mstp->peer_bkt, NULL, 0);
       
       _mstp = mstp;
 
       for (int i = 0; i < item_size; i++)
-      {
             push_front_bucket(&mstp->master_peer_bkt, (items + i));
-            registry_ping_peer(get_front_bucket(&mstp->master_peer_bkt));
-      }
 
-     _mstp->discovery_timeid = set_timeout(1, discovery_proc, &mstp->master_peer_bkt);
+      // _mstp->discovery_timeid = set_timeout(10, discovery_proc, &mstp->master_peer_bkt);
+      // _mstp->ping_timeid      = set_timeout(10, ping_peer, &mstp->master_peer_bkt);
+      _mstp->get_peers_timeid = set_timeout(10, get_peers, &mstp->master_peer_bkt);
 
       strncpy(mstp->ipv4, ipv4, strlen(ipv4));
       mstp->port = port;

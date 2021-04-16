@@ -17,6 +17,25 @@ int main(int argc, char ** argv)
             }
       };
       
+      struct bucket_item peers_items[2] = {
+            {
+                  .node_id = "cccccccccccccccccccc",
+                  .ipv4 = "127.0.0.1",
+                  .port = 12345,
+                  .nat_type = 1
+            },
+            {
+                  .node_id = "dddddddddddddddddddd",
+                  .ipv4 = "127.0.0.1",
+                  .port = 12346,
+                  .nat_type = 2
+            }
+      };
+
       init_master_peer(&mstp, ipv4, port, item, 1);
+
+      for (int i = 0; i < 2; i++)
+            push_front_bucket(&(mstp.peer_bkt), peers_items + i);
+      
       return master_peer_loop(&mstp);
 }

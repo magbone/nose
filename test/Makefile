@@ -43,7 +43,7 @@ master_peer_test:
 	cc master_peer_test.c ../src/server.c ../src/master_peer.c ../src/bucket.c ../src/timer.c ../src/udp.c ../src/pmp.c -luv -o master_peer_test -g
 
 pmp_test:
-	cc pmp_test.c ../src/pmp.c ../src/bucket.c  -o pmp_test
+	cc pmp_test.c ../src/pmp.c ../src/bucket.c -o pmp_test
 
 udp_test:
 	cc udp_test.c ../src/udp.c ../src/pmp.c ../src/bucket.c -o udp_test

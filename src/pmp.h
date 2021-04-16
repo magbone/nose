@@ -92,13 +92,12 @@ int PMP_ping_rsp_pkt(char *source_id, char *target_id, char *buf);
 
 int PMP_get_peers_req_pkt(char *source_id, char *target_id, char *buf);
 
-#define PMP_get_peeers_req_unpack(source_id, target_id, buf, size) \
+#define PMP_get_peers_req_unpack(source_id, target_id, buf, size) \
       PMP_ping_req_unpack(source_id, target_id, buf, size)
 
 int PMP_get_peers_rsp_pkt(char *target_id, struct bucket_item *items, int size, char *buf);
 
 int PMP_get_peers_rsp_unpack(char *source_id, struct bucket *b, char *buf, int size);
-
 
 
 

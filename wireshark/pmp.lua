@@ -15,26 +15,26 @@ p_pmp.fields = { f_type, f_code, f_port, f_tid, f_sid, f_rev, f_count}
 
 local data_dis = Dissector.get("data")
 
-function get_type_string(type)
-      if type == 0 then
-            return "Discovery"
-      elseif type == 1 then
-            return "Ping"
-      elseif type == 2 then
-            return "Get Peers"
-      else 
-            return "Error"
-      end
-end
+local type_string = {
+      "Discovery",
+      "Ping",
+      "Get Peers"
+}
 
-function get_code_string(code)
-      if code == 0 then
-            return "Request"
-      else 
-            return "Response"
-      end
-end
+local code_string = {
+      "Request",
+      "Response"
+}
 
+local nat_type_string = {
+      "UDP Blocked",
+      "Sym. UDP Firewall",
+      "Open Internet",
+      "Full Cone",
+      "Restricted",
+      "Port Restricted",
+      "Symmetric NAT"
+}
 
 function int_to_ip(n)
 	if n then
@@ -58,8 +58,8 @@ function p_pmp_dissector(buf, pkt, tree)
 
       local v_type = buf(0, 1):uint()
       local v_code = buf(1, 1):uint()
-      t:add(buf(0, 1), "Type:".. v_type.." ("..get_type_string(v_type)..")")
-      t:add(buf(1, 1), "Code:"..v_code.." ("..get_code_string(v_code)..")")
+      t:add(buf(0, 1), "Type:".. v_type.." ("..type_string[v_type]..")")
+      t:add(buf(1, 1), "Code:"..v_code.." ("..code_string[v_code]..")")
       --Discovery
       if v_type == 0 then 
             if v_code == 0 then
@@ -92,6 +92,7 @@ function p_pmp_dissector(buf, pkt, tree)
                         index = index + 28
                   end
             end
+      -- Ping
       elseif v_type == 1 then
       
             local v_rev = buf(2, 2):uint()
@@ -100,8 +101,8 @@ function p_pmp_dissector(buf, pkt, tree)
             t:add(buf(2, 2), "Reserve: "..v_rev)
             t:add(buf(4, 20), "Target ID: "..v_tid)
             t:add(buf(24, 20), "Source ID: "..v_sid)
-            
-      elseif v_type == 1 then
+      -- Get Peers      
+      elseif v_type == 2 then
             if v_code == 0 then
                   local v_rev = buf(2, 2):uint()
                   local v_tid  = buf(4, 20):string()
@@ -109,6 +110,30 @@ function p_pmp_dissector(buf, pkt, tree)
                   t:add(buf(2, 2), "Reserve: "..v_rev)
                   t:add(buf(4, 20), "Target ID: "..v_tid)
                   t:add(buf(24, 20), "Source ID: "..v_sid)
+            else
+                  local v_count = buf(2, 2):uint()
+                  local v_tid  = buf(4, 20):string()
+                  t:add(buf(2, 2), "Count: "..v_count)
+                  t:add(buf(4, 20), "Target ID:"..v_tid)
+
+                  if buf_len < 24 + v_count * 28 then return false end
+                  local index = 24
+                  local tb = t:add(buf(24, buf_len - 24),"Get Peers Options (".. v_count.." results)")
+                  for i = 1, v_count do
+                        local nat_type    = buf(index, 1):uint()
+                        local rev         = buf(index + 1, 1):uint()
+                        local port        = buf(index + 2, 2):uint()
+                        local ipv4        = int_to_ip(buf(index + 4, 4):uint())
+                        local id   = buf(index + 8, 20):string()
+                        local sub_tb = tb:add(buf(index, 28), i.. "st result "..ipv4..":"..port.." nat type: "..nat_type_string[nat_type].." node id: "..id)
+                        
+                        sub_tb:add(buf(index , 1), "Nat Type: "..nat_type.." ("..nat_type_string[nat_type]..")")
+                        sub_tb:add(buf(index + 1, 1), "Reserve: "..rev)
+                        sub_tb:add(buf(index + 2, 2), "Port: "..port)
+                        sub_tb:add(buf(index + 4, 4), "IP: "..ipv4)
+                        sub_tb:add(buf(index + 8, 20), "ID: "..id)
+                        index = index + 28
+                  end
             end
       end
       return true

@@ -4,13 +4,17 @@
 #include <stdint.h>
 #include <pthread.h>
 
+#define PALIVE     1
+#define PDEAD      2
+#define PUNKOWN    3
+
 struct bucket_item
 {
       u_int16_t port;
       char ipv4[16];
       char node_id[21];
-      int time_id;
-      int discovery_time;
+
+      int state;
 
       int nat_type; // Only for peer
 };
@@ -19,7 +23,7 @@ struct bucket_item
 
 struct bucket
 {
-      int top;
+      int top, visited;
       struct bucket_item *b[MAX_BUCKET_SIZE];
 };
 
@@ -34,6 +38,8 @@ void push_front_bucket(struct bucket *bkt, struct bucket_item *item);
 struct bucket_item *get_front_bucket(struct bucket *bkt);
 
 struct bucket_item *get_back_bucket(struct bucket *bkt);
+
+struct bucket_item *get_next_bucket_item(struct bucket *bkt);
 
 int get_top_bucket_items(struct bucket *bkt, struct bucket_item *item, int size);
 
