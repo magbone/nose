@@ -5,6 +5,9 @@
 
 struct udp_handler
 {
+      struct sockaddr_in bind_in;
+      int bind_flag;
+      /** **/
       int sockfd;
       struct sockaddr_in in;
 };

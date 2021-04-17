@@ -17,5 +17,9 @@ void gen_random_int(int *value, int length);
 
 void gen_random_node_id(char *node_id);
 
+void gen_random_trans_id(char *trans_id);
+
+int gethostbyname1(char *domain, char *ipv4);
+
 #endif // !_UTILS_H_
 

@@ -10,12 +10,13 @@ APPS = \
 	bucket_test\
 	master_peer_test\
 	pmp_test\
-	udp_test
+	udp_test\
+	nat_type_test
 
 # End of APPS
 
 
-all:crypt_test dfa_test pcap_test time_test tun_test sha256_test bucket_test master_peer_test pmp_test udp_test
+all:crypt_test dfa_test pcap_test time_test tun_test sha256_test bucket_test master_peer_test pmp_test udp_test nat_type_test
 
 
 crypt_test: 
@@ -47,6 +48,9 @@ pmp_test:
 
 udp_test:
 	cc udp_test.c ../src/udp.c ../src/pmp.c ../src/bucket.c -o udp_test
+
+nat_type_test:
+	cc nat_type_test.c ../src/stun/nat_test.c ../src/utils.c -lssl -lcrypto -luv -w -o nat_type_test
 
 clean: 
 	rm -rf $(APPS)

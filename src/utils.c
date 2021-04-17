@@ -6,6 +6,8 @@
 #include "utils.h"
 
 #include <arpa/inet.h>
+#include <netdb.h>
+#include <errno.h>
 #include <ctype.h>
 #include <assert.h>
 #include <openssl/sha.h>
@@ -81,4 +83,46 @@ gen_random_node_id(char *node_id)
       for (int i = 0; i < 20; i++)
             node_id[i] = base[rand() % strlen(base)];
       node_id[20] = '\0';
+}
+
+void 
+gen_random_trans_id(char *trans_id)
+{
+      srand((unsigned)time(NULL));
+      if (trans_id == NULL)
+            return;
+      
+      for (int i = 0; i < 16; i++)
+            trans_id[i] = rand() % 255;
+}
+
+int 
+gethostbyname1(char *domain, char *ipv4)
+{
+      if (domain == NULL || ipv4 == NULL) return (ERROR);
+      char *ptr, **pptr;
+      struct hostent *hp = gethostbyname(domain);
+      
+      if (hp == NULL) return (ERROR);
+
+      switch (hp->h_addrtype)
+      {
+      case AF_INET:
+            pptr = hp->h_addr_list;
+
+            for (; *pptr != NULL; pptr++)
+            {
+                  ptr = inet_ntoa( *(struct in_addr*)*pptr );
+                  if (ptr == NULL) return (ERROR);
+                  strncpy(ipv4, ptr, strlen(ptr));
+                  break;
+            }
+            
+            break;
+      
+      default:
+            break;
+      }
+
+      return (OK);
 }
