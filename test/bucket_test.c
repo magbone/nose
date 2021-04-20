@@ -16,14 +16,17 @@ int main()
       };
       init_bucket(&bkt, items, 4);
 
-      printf("%d\n", bkt.top);
+      printf("%d\n", bucket_size(&bkt));
 
-      pop_front_bucket(&bkt);
+      // pop_front_bucket(&bkt);
 
-      struct bucket_item *item = get_front_bucket(&bkt);
-      printf("node_id: %s, host: %s:%d\n", item->node_id, item->ipv4, item->port);
+      // struct bucket_item *item = get_front_bucket(&bkt);
+      // printf("node_id: %s, host: %s:%d\n", item->node_id, item->ipv4, item->port);
 
-      printf("%d\n", bkt.top);
+
+      
+      printf("%d\n", bucket_size(&bkt));
+
       destory_bucket(&bkt);
       return 0;
 }

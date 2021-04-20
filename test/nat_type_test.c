@@ -13,9 +13,10 @@ const char *nat_type_strs[] = {
       0
 };
 
-int main()
+int main(int argc, char **argv)
 {
-      char* source_addr = "10.66.83.203";
+      if (argc < 2) return 0;
+      char* source_addr = argv[1];
       struct nat_type type;
       if (get_nat_type(source_addr, 0, NULL, 0, &type))
       {

@@ -22,20 +22,22 @@ int main(int argc, char ** argv)
                   .node_id = "cccccccccccccccccccc",
                   .ipv4 = "127.0.0.1",
                   .port = 12345,
-                  .nat_type = 1
+                  .nat_type = 1,
+                  .vlan_ipv4 = "172.0.0.10"
             },
             {
                   .node_id = "dddddddddddddddddddd",
                   .ipv4 = "127.0.0.1",
                   .port = 12346,
-                  .nat_type = 2
+                  .nat_type = 2,
+                  .vlan_ipv4 = "172.0.0.20"
             }
       };
 
       init_master_peer(&mstp, ipv4, port, item, 1);
 
       for (int i = 0; i < 2; i++)
-            push_front_bucket(&(mstp.peer_bkt), peers_items + i);
+            push_front_bucket(&(mstp.peer_bkt), *(peers_items + i));
       
       return master_peer_loop(&mstp);
 }

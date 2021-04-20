@@ -61,6 +61,15 @@ const struct sockaddr* addr, unsigned flags)
                         size = get_top_bucket_items(&_mstp->peer_bkt, items, 10);
                         len = PMP_get_peers_rsp_pkt(source_id, items, size, b);
                         break;
+                  case R_P:
+                        if (PMP_peer_registry_req_unpack(source_id, &(_mstp->peer_bkt), buf->base, nread) == ERROR)
+                        {
+                              fprintf(stderr, "[ERROR] Malformation PMP get peers request packet received\n");
+                              return;
+                        }
+
+                        fprintf(stdout, "[INFO] Received peer registry from %s\n", source_id);
+                        len = PMP_peer_registry_rsp_pkt(_mstp->node_id, source_id, b);
                   default:
                         break;
                   }
@@ -91,19 +100,6 @@ const struct sockaddr* addr, unsigned flags)
 
 }
 
-// void 
-// registry_ping_peer(struct bucket_item *item)
-// {
-//       fprintf(stdout, "[INFO] Registry ping peer: node_id %s\n", item->node_id);
-//       item->time_id = set_timeout(3, ping_peer, item);
-// }
-
-// void 
-// unregistry_ping_peer(struct bucket_item *item)
-// {
-//       fprintf(stdout, "[INFO] Unregistry ping peer: node_id %s\n", item->node_id);
-//       clear_timeout(item->time_id);
-// }
 
 void* 
 ping_peer(const void *args)
@@ -211,20 +207,21 @@ init_master_peer(struct master_peer *mstp, char *ipv4, int port, struct bucket_i
 {
       if (mstp == NULL) return (ERROR);
 
-      init_bucket(&mstp->master_peer_bkt, items, item_size);
-      init_bucket(&mstp->peer_bkt, NULL, 0);
+      init_bucket(&(mstp->master_peer_bkt), items, item_size);
+      init_bucket(&(mstp->peer_bkt), NULL, 0);
       
-      _mstp = mstp;
 
       for (int i = 0; i < item_size; i++)
-            push_front_bucket(&mstp->master_peer_bkt, (items + i));
+            push_front_bucket(&mstp->master_peer_bkt, *(items + i));
 
       // _mstp->discovery_timeid = set_timeout(10, discovery_proc, &mstp->master_peer_bkt);
       // _mstp->ping_timeid      = set_timeout(10, ping_peer, &mstp->master_peer_bkt);
-      _mstp->get_peers_timeid = set_timeout(10, get_peers, &mstp->master_peer_bkt);
+      mstp->get_peers_timeid = set_timeout(10, get_peers, &mstp->master_peer_bkt);
 
       strncpy(mstp->ipv4, ipv4, strlen(ipv4));
       mstp->port = port;
+
+      _mstp = mstp;
 
       return (OK);
 }

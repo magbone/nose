@@ -18,7 +18,8 @@ local data_dis = Dissector.get("data")
 local type_string = {
       "Discovery",
       "Ping",
-      "Get Peers"
+      "Get Peers",
+      "Registry Peer"
 }
 
 local code_string = {
@@ -33,7 +34,8 @@ local nat_type_string = {
       "Full Cone",
       "Restricted",
       "Port Restricted",
-      "Symmetric NAT"
+      "Symmetric NAT",
+      "Unexpected NAT Type"
 }
 
 function int_to_ip(n)
@@ -58,8 +60,8 @@ function p_pmp_dissector(buf, pkt, tree)
 
       local v_type = buf(0, 1):uint()
       local v_code = buf(1, 1):uint()
-      t:add(buf(0, 1), "Type:".. v_type.." ("..type_string[v_type]..")")
-      t:add(buf(1, 1), "Code:"..v_code.." ("..code_string[v_code]..")")
+      t:add(buf(0, 1), "Type:".. v_type.." ("..type_string[v_type + 1]..")")
+      t:add(buf(1, 1), "Code:"..v_code.." ("..code_string[v_code + 1]..")")
       --Discovery
       if v_type == 0 then 
             if v_code == 0 then
@@ -116,7 +118,7 @@ function p_pmp_dissector(buf, pkt, tree)
                   t:add(buf(2, 2), "Count: "..v_count)
                   t:add(buf(4, 20), "Target ID:"..v_tid)
 
-                  if buf_len < 24 + v_count * 28 then return false end
+                  if buf_len < 24 + v_count * 32 then return false end
                   local index = 24
                   local tb = t:add(buf(24, buf_len - 24),"Get Peers Options (".. v_count.." results)")
                   for i = 1, v_count do
@@ -124,17 +126,48 @@ function p_pmp_dissector(buf, pkt, tree)
                         local rev         = buf(index + 1, 1):uint()
                         local port        = buf(index + 2, 2):uint()
                         local ipv4        = int_to_ip(buf(index + 4, 4):uint())
-                        local id   = buf(index + 8, 20):string()
-                        local sub_tb = tb:add(buf(index, 28), i.. "st result "..ipv4..":"..port.." nat type: "..nat_type_string[nat_type].." node id: "..id)
+                        local vlan_ipv4   = int_to_ip(buf(index + 8, 4):uint())
+                        local id          = buf(index + 12, 20):string()
+                        local sub_tb      = tb:add(buf(index, 28), i.. "st result "..ipv4..":"..port.." nat type: "
+                              ..nat_type_string[nat_type + 1].." node id: "..id.." Vlan IP: "..vlan_ipv4)
                         
-                        sub_tb:add(buf(index , 1), "Nat Type: "..nat_type.." ("..nat_type_string[nat_type]..")")
+                        sub_tb:add(buf(index , 1), "Nat Type: "..nat_type.." ("..nat_type_string[nat_type + 1]..")")
                         sub_tb:add(buf(index + 1, 1), "Reserve: "..rev)
                         sub_tb:add(buf(index + 2, 2), "Port: "..port)
                         sub_tb:add(buf(index + 4, 4), "IP: "..ipv4)
-                        sub_tb:add(buf(index + 8, 20), "ID: "..id)
-                        index = index + 28
+                        sub_tb:add(buf(index + 8, 4), "VLAN IP:"..vlan_ipv4)
+                        sub_tb:add(buf(index + 12, 20), "ID: "..id)
+                        index = index + 32
                   end
             end
+      -- Registry Peer
+      elseif v_type == 3 then
+            if v_code == 0 then
+                  if buf_len < 56 then return false end
+                  local nat_type = buf(2, 2):uint()
+                  local reserved = buf(4, 2):uint()
+                  local port     = buf(6, 2):uint()
+                  local ipv4     = int_to_ip(buf(8, 4):uint())
+                  local vlan_ipv4= int_to_ip(buf(12, 4):uint())
+                  local mstp_id  = buf(16, 20):string()
+                  local peer_id  = buf(36, 20):string()
+
+                  t:add(buf(2, 2), "NAT Type: "..nat_type.." ("..nat_type_string[nat_type + 1]..")")
+                  t:add(buf(4, 2), "Reserved: "..reserved)
+                  t:add(buf(6, 2), "Port: "..port)
+                  t:add(buf(8, 4), "IP: "..ipv4)
+                  t:add(buf(12, 4), "VLAN IP: "..vlan_ipv4)
+                  t:add(buf(16, 20), "Master Peer ID: ".. mstp_id)
+                  t:add(buf(36, 20), "Peer ID: "..peer_id)
+            else
+                  local v_rev = buf(2, 2):uint()
+                  local v_tid  = buf(4, 20):string()
+                  local v_sid  = buf(24, 20):string() 
+                  t:add(buf(2, 2), "Reserve: "..v_rev)
+                  t:add(buf(4, 20), "Peer ID: "..v_tid)
+                  t:add(buf(24, 20), "Master Peer ID: "..v_sid)
+            end
+            
       end
       return true
 end

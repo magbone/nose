@@ -3,6 +3,7 @@
 #include "../utils.h"
 #include "../nose.h"
 
+#include <errno.h>
 
 static int 
 _create_nat_test_sock(struct sockaddr_in *addr)
@@ -17,7 +18,7 @@ _create_nat_test_sock(struct sockaddr_in *addr)
       if ((ret = setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))) < 0)
             return (ret);
       
-      if ((ret = bind(sockfd, (struct sockaddr*)addr, addr_len) < 0))
+      if ((ret = bind(sockfd, (struct sockaddr*)addr, addr_len)) < 0)
             return (ret);
             
       return (sockfd);
@@ -164,10 +165,20 @@ static int test1(int sockfd, struct sockaddr_in *dst_addr,
       free(header);
 
       if (sendto(sockfd, buf, sizeof(struct _STUN_message_header), 0, (struct sockaddr *)dst_addr, addr_len) < 0)
+      {
+            #ifdef DEBUG 
+            fprintf(stderr, "[ERROR] testI(sendto) err_code: %d, err_msg: %s\n", errno, strerror(errno));
+            #endif 
             return (ERROR);
+      }
       
       if ((len = recvfrom(sockfd, buf, BUFSIZ, 0, (struct sockaddr *)src_addr, (socklen_t *)& addr_len)) < 0)
+      {
+            #ifdef DEBUG 
+            fprintf(stderr, "[ERROR] testI(recvfrom) err_code: %d, err_msg: %s\n", errno, strerror(errno));
+            #endif 
             return (len);
+      }
       
       return stun_rsp_unpack(buf, len, external_ip, external_port);
 }
@@ -215,11 +226,21 @@ static int test2(int sockfd, struct sockaddr_in *dst_addr,
       const int size = sizeof(struct _STUN_message_header) + 
                   sizeof(struct _STUN_attribute) + sizeof(flags);
       
-      if (sendto(sockfd, buf, sizeof(struct _STUN_message_header), 0, (struct sockaddr *)dst_addr, addr_len) < 0)
-            return (ERROR);
+      if ((len = sendto(sockfd, buf, size, 0, (struct sockaddr *)dst_addr, addr_len)) < 0)
+      {
+            #ifdef DEBUG 
+            fprintf(stderr, "[ERROR] testII(sendto) err_code: %d, err_msg: %s\n", errno, strerror(errno));
+            #endif 
+            return (len);
+      }
       
       if ((len = recvfrom(sockfd, buf, BUFSIZ, 0, (struct sockaddr *)src_addr, (socklen_t *)& addr_len)) < 0)
+      {
+            #ifdef DEBUG 
+            fprintf(stderr, "[ERROR] testII(recvfrom) err_code: %d, err_msg: %s\n", errno, strerror(errno));
+            #endif 
             return (len);
+      }
       
       return stun_rsp_unpack(buf, len, external_ip, external_port);
 }
@@ -263,11 +284,21 @@ static int test3(int sockfd, struct sockaddr_in *dst_addr,
                   sizeof(struct _STUN_attribute) + sizeof(flags);
       int addr_len = sizeof(struct sockaddr_in), len;
       
-      if (sendto(sockfd, buf, sizeof(struct _STUN_message_header), 0, (struct sockaddr *)dst_addr, addr_len) < 0)
-            return (ERROR);
+      if ((len = sendto(sockfd, buf, size, 0, (struct sockaddr *)dst_addr, addr_len)) < 0)
+      {
+            #ifdef DEBUG 
+            fprintf(stderr, "[ERROR] testIII(sendto) err_code: %d, err_msg: %s\n", errno, strerror(errno));
+            #endif 
+            return (len);
+      }
       
       if ((len = recvfrom(sockfd, buf, BUFSIZ, 0, (struct sockaddr *)src_addr, (socklen_t *)& addr_len)) < 0)
+      {
+            #ifdef DEBUG 
+            fprintf(stderr, "[ERROR] testIII(recvfrom) err_code: %d, err_msg: %s\n", errno, strerror(errno));
+            #endif 
             return (len);
+      }
 
       return stun_rsp_unpack(buf, len, external_ip, external_port);
 }

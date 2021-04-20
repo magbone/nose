@@ -246,3 +246,9 @@ The following table describles ![](https://latex.codecogs.com/gif.latex?\delta):
 ### May do
 
 - [ ] Utun implement in Windows platform
+
+
+### Known problems
+* Vlan address conflict
+* PMP packet verification(Check **Target ID** field)
+* Symmetric NAT traversal
