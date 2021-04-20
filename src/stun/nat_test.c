@@ -102,6 +102,7 @@ stun_rsp_unpack(char *buf, int size, char *external_ip, int *exteral_port)
                         fprintf(stdout, "Mapped Address: %s:%d\n", ipv4, htons(value->port));
                         #endif
                         strncpy(external_ip, ipv4, strlen(ipv4));
+                        *(external_ip + strlen(ipv4)) = '\0';
                         *exteral_port = htons(value->port);
                         break;
                   case SRC_ADDR:
@@ -320,11 +321,17 @@ static int do_test(const char *source_addr, const int source_port,
 
       int sockfd = _create_nat_test_sock(&src_addr);
 
-      if (sockfd < 0) return (sockfd); 
+      if (sockfd < 0) 
+      {
+            #ifdef DEBUG
+            fprintf(stderr, "[ERROR] Create socket failed. err_code:%d, err_msg:%s\n", errno, strerror(errno));
+            #endif
+            return (sockfd); 
+      }
       // Do TestI
       if (test1(sockfd, &dst_addr, &src_addr, trans_id, type->ipv4, &(type->port)) == OK)
       {
-            if(strcmp(source_addr, type->ipv4) == 0)
+            if(inet_addr(source_addr) == inet_addr(type->ipv4))
             {
                   // Do testII
                   if (test2(sockfd, &dst_addr, &src_addr, trans_id,
@@ -356,7 +363,7 @@ static int do_test(const char *source_addr, const int source_port,
                         if (test1(sockfd, &dst_addr, &src_addr, trans_id, 
                                     type->ipv4, &(type->port)) == OK)
                         {
-                              if (strcmp(source_addr, type->ipv4) == 0)
+                              if (inet_addr(source_addr) == inet_addr(type->ipv4))
                               {
                                     // Do testIII
                                     if (test1(sockfd, &dst_addr, &src_addr, trans_id, 
@@ -411,6 +418,11 @@ int get_nat_type(char *source_addr, int source_port,
       char _stun_server_addr[18];
       if (gethostbyname1(stun_server_addr == NULL ? (char *)stun_server[0]: stun_server_addr, 
                   _stun_server_addr) != OK)
+      {     
+            #ifdef DEBUG
+            fprintf(stderr, "[ERROR] Query DNS failed. err_code %d, err_msg: %s\n", errno, strerror(errno));
+            #endif
             return (ERROR);
+      }
       return do_test(_source_addr, _source_port, _stun_server_addr, _stun_server_port, type);
 }

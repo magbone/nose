@@ -15,10 +15,11 @@ const char *nat_type_strs[] = {
 
 int main(int argc, char **argv)
 {
-      if (argc < 2) return 0;
+      if (argc < 3) return 0;
       char* source_addr = argv[1];
+      char* stun_sever_addr = argv[2];
       struct nat_type type;
-      if (get_nat_type(source_addr, 0, NULL, 0, &type))
+      if (get_nat_type(source_addr, 0, stun_sever_addr, 0, &type))
       {
             printf("NAT Type: %s\n"
                   "External IP: %s\n"

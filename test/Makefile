@@ -37,7 +37,7 @@ dfa_test:
 	cc dfa_test.c ../src/dfa.c -o dfa_test
 
 time_test:
-	cc time_test.c ../src/timer.c -o time_test
+	cc time_test.c ../src/timer.c -pthread -o time_test
 
 tun_test:
 	cc tun_test.c $(TUN_DEVICE_SOURCE) ../src/net_config.c -o tun_test
