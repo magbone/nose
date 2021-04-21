@@ -15,7 +15,7 @@ const struct sockaddr* addr, unsigned flags)
 {
 
       char source_id[21], target_id[21], b[BUFSIZ];
-      struct bucket_item items[256];
+      struct bucket_item items[256], item;
       u_int16_t port;
       int len = 0, size = 0;
 
@@ -70,6 +70,20 @@ const struct sockaddr* addr, unsigned flags)
 
                         fprintf(stdout, "[INFO] Received peer registry from %s\n", source_id);
                         len = PMP_peer_registry_rsp_pkt(_mstp->node_id, source_id, b);
+                        break;
+                  case F_P:
+                        if ((len = PMP_find_peer_req_unpack(source_id, target_id, &(_mstp->peer_bkt), &item, buf->base, nread)) == ERROR)
+                        {
+                              fprintf(stderr, "[ERROR] Malformation PMP find peer request packet received\n");
+                              return;
+                        }
+                        else if (len == FAILED)
+                        {
+                              fprintf(stderr, "[ERROR] Not find the remote peer\n");
+                              return;
+                        }
+                        fprintf(stdout, "[INFO] Received find peer\n");
+                        len = PMP_find_peer_rsp_pkt(_mstp->node_id, source_id, item, b);
                   default:
                         break;
                   }

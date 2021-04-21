@@ -91,6 +91,18 @@ typedef struct PMP_peer_registry_req
 
 typedef PMP_ping_req_t PMP_peer_registry_rsp_t;
 
+typedef struct PMP_find_peer_req
+{
+      struct PMP_Header header;
+      u_int16_t reserve;
+      u_int32_t vlan_ipv4;
+      u_int8_t mstp_id[20];
+      u_int8_t peer_id[20];
+
+}PMP_find_peer_req_t;
+
+typedef PMP_peer_registry_req_t PMP_find_peer_rsp_t;
+
 int PMP_discovery_req_pkt(u_int16_t port, char *source_id, char *target_id, char *buf);
 
 int PMP_discovery_req_unpack(u_int16_t *port, char *source_id, char *target_id, char *buf, int size);
@@ -105,13 +117,11 @@ int PMP_ping_req_unpack(char *source_id, char *target_id, char *buf, int size);
 
 int PMP_ping_rsp_pkt(char *source_id, char *target_id, char *buf);
 
-#define PMP_ping_rsp_unpack(source_id, target_id, buf, size) \
-      PMP_ping_req_unpack(source_id, target_id, buf, size)
+#define PMP_ping_rsp_unpack PMP_ping_req_unpack
 
 int PMP_get_peers_req_pkt(char *source_id, char *target_id, char *buf);
 
-#define PMP_get_peers_req_unpack(source_id, target_id, buf, size) \
-      PMP_ping_req_unpack(source_id, target_id, buf, size)
+#define PMP_get_peers_req_unpack PMP_ping_req_unpack
 
 int PMP_get_peers_rsp_pkt(char *target_id, struct bucket_item *items, int size, char *buf);
 
@@ -124,5 +134,13 @@ int PMP_peer_registry_req_unpack(char *peer_id, struct bucket *b, char *buf, int
 int PMP_peer_registry_rsp_pkt(char *mstp_id, char *peer_id, char *buf);
 
 #define PMP_peer_registry_rsp_unpack PMP_ping_req_unpack
+
+int PMP_find_peer_req_pkt(char *peer_id, char *mstp_id, char *vlan_ipv4, char *buf);
+
+int PMP_find_peer_req_unpack(char *peer_id, char *mstp_id, struct bucket * b, struct bucket_item *item, char *buf, int size);
+
+int PMP_find_peer_rsp_pkt(char *mstp_id, char *peer_id, struct bucket_item item, char *buf);
+
+#define PMP_find_peer_rsp_unpack PMP_peer_registry_req_unpack
 
 #endif //! _PMP_H_

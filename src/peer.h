@@ -2,6 +2,7 @@
 #define _PEER_H_
 
 #include "stun/nat_test.h"
+#include "bucket.h"
 
 // Peer active heartbeat, we should send heartbeat to mantain the hole per hb_time seconds by peer.
 struct peer_active_hb
@@ -20,12 +21,17 @@ struct peer
       char vlan_local_ipv4[16], vlan_remote_ipv4[16], master_peer_ipv4[16], source_ipv4[16];
 
       struct peer_active_hb hb;
+      int sockfd;
+      int find_peer_timeid;
+
+      struct bucket peer;
 };
 
 static int create_mstp_conn_sock();
 
 static int registry_peer(struct peer *handler);
 
+static void* find_remote_peer(const void *args);
 
 int init_peer(struct peer *handler);
 

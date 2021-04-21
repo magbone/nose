@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <pthread.h>
+#include <time.h>
 
 #define PALIVE     1
 #define PDEAD      2
@@ -17,6 +18,7 @@ struct bucket_item
       int state;
       char vlan_ipv4[16];
       int nat_type; // Only for peer
+      time_t join_timestap; 
 };
 
 #define MAX_BUCKET_SIZE 255
@@ -51,7 +53,8 @@ int is_empty_bucket(struct bucket *bkt);
 
 int bucket_size(struct bucket *bkt);
 
-void destory_bucket(struct bucket *bkt);
+int get_item_by_vlan_ipv4(struct bucket *bkt, char *vlan_ipv4, struct bucket_item *item);
 
+void destory_bucket(struct bucket *bkt);
 
 #endif // !_BUCKET_H_

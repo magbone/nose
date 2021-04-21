@@ -32,7 +32,7 @@ int utun_open(char *device_name)
 
       ifr.ifr_flags = IFF_TUN | IFF_NO_PI;
 
-      if (device_name == NULL || !(*devname)) return (FAILED);
+      if (device_name == NULL || !(*device_name)) return (FAILED);
       int id = 1;
       do{
             
@@ -41,11 +41,11 @@ int utun_open(char *device_name)
             if ((err = ioctl(fd, TUNSETIFF, (void *)&ifr)) > 0)
                   break;
             
-            sprintf(device_name, "tun%d", i);
+            sprintf(device_name, "tun%d", id);
             memset(ifr.ifr_name, 0, IFNAMSIZ);
-      }while (i <= 255);
+      }while (id <= 255);
       
-      if (i > 255) 
+      if (id > 255) 
       {
             fprintf(stdout, "[ERROR] Device allocation is out of range\n");
             close(fd);

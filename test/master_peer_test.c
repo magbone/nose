@@ -23,14 +23,14 @@ int main(int argc, char ** argv)
                   .ipv4 = "127.0.0.1",
                   .port = 12345,
                   .nat_type = 1,
-                  .vlan_ipv4 = "172.0.0.10"
+                  .vlan_ipv4 = "172.0.10.88"
             },
             {
                   .node_id = "dddddddddddddddddddd",
                   .ipv4 = "127.0.0.1",
                   .port = 12346,
                   .nat_type = 2,
-                  .vlan_ipv4 = "172.0.0.20"
+                  .vlan_ipv4 = "172.0.10.99"
             }
       };
 

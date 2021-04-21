@@ -19,7 +19,8 @@ local type_string = {
       "Discovery",
       "Ping",
       "Get Peers",
-      "Registry Peer"
+      "Registry Peer",
+      "Find Peer"
 }
 
 local code_string = {
@@ -167,7 +168,36 @@ function p_pmp_dissector(buf, pkt, tree)
                   t:add(buf(4, 20), "Peer ID: "..v_tid)
                   t:add(buf(24, 20), "Master Peer ID: "..v_sid)
             end
-            
+      elseif v_type == 4 then
+            if v_code == 0 then
+                  if  buf_len < 48 then return false end
+
+                  local reserve     = buf(2, 2):uint()
+                  local vlan_ipv4   = int_to_ip(buf(4, 4):uint())
+                  local mstp_id     = buf(8, 20):string()
+                  local peer_id     = buf(28, 20):string()
+
+                  t:add(buf(2, 2), "Reserve: ".. reserve)
+                  t:add(buf(4, 4), "VLAN IP: "..vlan_ipv4)
+                  t:add(buf(8, 20), "Master peer ID: ".. mstp_id)
+                  t:add(buf(28, 20), "Peer ID: ".. peer_id)
+            else 
+                  local nat_type = buf(2, 2):uint()
+                  local reserved = buf(4, 2):uint()
+                  local port     = buf(6, 2):uint()
+                  local ipv4     = int_to_ip(buf(8, 4):uint())
+                  local vlan_ipv4= int_to_ip(buf(12, 4):uint())
+                  local mstp_id  = buf(16, 20):string()
+                  local peer_id  = buf(36, 20):string()
+
+                  t:add(buf(2, 2), "NAT Type: "..nat_type.." ("..nat_type_string[nat_type + 1]..")")
+                  t:add(buf(4, 2), "Reserved: "..reserved)
+                  t:add(buf(6, 2), "Port: "..port)
+                  t:add(buf(8, 4), "IP: "..ipv4)
+                  t:add(buf(12, 4), "VLAN IP: "..vlan_ipv4)
+                  t:add(buf(16, 20), "Master Peer ID: ".. mstp_id)
+                  t:add(buf(36, 20), "Peer ID: "..peer_id)
+            end
       end
       return true
 end

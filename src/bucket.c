@@ -5,6 +5,7 @@
 #include "bucket.h"
 
 #include <string.h>
+#include <sys/time.h>
 
 void 
 init_bucket(struct bucket *bkt, struct bucket_item *init_items, int init_items_size)
@@ -31,7 +32,7 @@ push_front_bucket(struct bucket *bkt, struct bucket_item item)
       if (bkt == NULL) return;
 
       pthread_mutex_lock(&mutex);
-
+      struct timeval tv;
       for (int i = 0; i <= bkt->top; i++)
       {
             if (strcmp(item.node_id, bkt->b[i].node_id) == 0) 
@@ -43,6 +44,8 @@ push_front_bucket(struct bucket *bkt, struct bucket_item item)
       }
       if (bkt->top + 1 == MAX_BUCKET_SIZE)
             pop_back_bucket(bkt);
+      gettimeofday(&tv, NULL);
+      item.join_timestap = tv.tv_sec * 1000000 + tv.tv_usec;
       bkt->b[++bkt->top] = item;
       pthread_mutex_unlock(&mutex);
 }
@@ -135,6 +138,24 @@ bucket_size(struct bucket *bkt)
       int size = bkt->top + 1;
       pthread_mutex_unlock(&mutex);
       return size;
+}
+
+int 
+get_item_by_vlan_ipv4(struct bucket *bkt, char *vlan_ipv4, struct bucket_item *item)
+{
+      if (bkt == NULL || vlan_ipv4 == NULL || item == NULL) return (ERROR);
+      pthread_mutex_lock(&mutex);
+      for (int i = 0; i <= bkt->top; i++)
+      {
+            if (strcmp(bkt->b[i].vlan_ipv4, vlan_ipv4) == 0)
+            {
+                  *item = bkt->b[i];
+                  pthread_mutex_unlock(&mutex);
+                  return (OK);
+            }
+      }
+      pthread_mutex_unlock(&mutex);
+      return (FAILED);
 }
 
 void 

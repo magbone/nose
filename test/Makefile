@@ -11,9 +11,12 @@ APPS = \
 	pmp_test\
 	udp_test\
 	nat_type_test\
-	peer_test
+	peer_test\
+	conf_test
 
 # End of APPS
+
+C_FLAGS ?= -std=gnu99 -w
 
 DARWIN_TUN_DEVICE_SOURCE = "../src/bsd/device.c"
 LINUX_TUN_DEVICE_SOURCE  = "../src/linux/device.c"
@@ -27,41 +30,44 @@ ifeq ($(shell uname), Linux)
 	TUN_DEVICE_SOURCE = $(LINUX_TUN_DEVICE_SOURCE)
 endif
 
-all:crypt_test dfa_test time_test tun_test sha256_test bucket_test master_peer_test pmp_test udp_test nat_type_test peer_test
+all:crypt_test dfa_test time_test tun_test sha256_test bucket_test master_peer_test pmp_test udp_test nat_type_test peer_test conf_test
 
 
 crypt_test: 
-	cc crypt_test.c ../src/crypt.c -lmbedtls -lmbedx509 -lmbedcrypto -o crypt_test
+	cc crypt_test.c ../src/crypt.c -lmbedtls -lmbedx509 -lmbedcrypto -o crypt_test $(C_FLAGS)
 
 dfa_test:
-	cc dfa_test.c ../src/dfa.c -o dfa_test
+	cc dfa_test.c ../src/dfa.c -o dfa_test $(C_FLAGS)
 
 time_test:
-	cc time_test.c ../src/timer.c -pthread -o time_test
+	cc time_test.c ../src/timer.c -pthread -o time_test $(C_FLAGS)
 
 tun_test:
-	cc tun_test.c $(TUN_DEVICE_SOURCE) ../src/net_config.c -o tun_test
+	cc tun_test.c $(TUN_DEVICE_SOURCE) ../src/net_config.c -o tun_test $(C_FLAGS)
 
 sha256_test:
-	cc sha256_test.c ../src/utils.c -lssl -lcrypto -o sha256_test -w
+	cc sha256_test.c ../src/utils.c -lssl -lcrypto -o sha256_test $(C_FLAGS)
 
 bucket_test:
-	cc bucket_test.c ../src/bucket.c ../src/utils.c -lssl -lcrypto -o bucket_test -w
+	cc bucket_test.c ../src/bucket.c ../src/utils.c -lssl -lcrypto -o bucket_test $(C_FLAGS)
 
 master_peer_test:
-	cc master_peer_test.c ../src/server.c ../src/master_peer.c ../src/bucket.c ../src/timer.c ../src/udp.c ../src/pmp.c -luv -lpthread -o master_peer_test -g
+	cc master_peer_test.c ../src/server.c ../src/master_peer.c ../src/bucket.c ../src/timer.c ../src/udp.c ../src/pmp.c -luv -lpthread -o master_peer_test -g $(C_FLAGS)
 
 pmp_test:
-	cc pmp_test.c ../src/pmp.c ../src/bucket.c -o pmp_test
+	cc pmp_test.c ../src/pmp.c ../src/bucket.c -o pmp_test $(C_FLAGS)
 
 udp_test:
-	cc udp_test.c ../src/udp.c ../src/pmp.c ../src/bucket.c -o udp_test
+	cc udp_test.c ../src/udp.c ../src/pmp.c ../src/bucket.c -o udp_test $(C_FLAGS)
 
 nat_type_test:
-	cc nat_type_test.c ../src/stun/nat_test.c ../src/utils.c -lssl -lcrypto -luv -w -o nat_type_test -D DEBUG
+	cc nat_type_test.c ../src/stun/nat_test.c ../src/utils.c -lssl -lcrypto -luv -o nat_type_test -D DEBUG $(C_FLAGS)
 
 peer_test:
-	cc peer_test.c ../src/stun/nat_test.c ../src/utils.c ../src/peer.c ../src/pmp.c ../src/bucket.c -lssl -lcrypto -luv -lpthread -w -o peer_test
+	cc peer_test.c ../src/stun/nat_test.c ../src/utils.c ../src/peer.c ../src/pmp.c ../src/bucket.c ../src/udp.c ../src/conf/conf-reader.c ../src/timer.c -lssl -lcrypto -luv -lpthread -o peer_test $(C_FLAGS)
+
+conf_test:
+	cc conf_test.c ../src/conf/conf-reader.c -o conf_test $(C_FLAGS)
 
 clean: 
 	rm -rf $(APPS)

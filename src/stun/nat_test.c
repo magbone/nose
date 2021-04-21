@@ -401,7 +401,7 @@ static int do_test(const char *source_addr, const int source_port,
             // printf("UDP Blocked\n");
             type->nat_type = UDP_BLOCKED;
       }
-      return (OK);
+      return (sockfd);
 }
 
 

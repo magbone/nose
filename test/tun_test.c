@@ -9,12 +9,22 @@
 int main(void)
 {
     int fd;
-
-    if ((fd = utun_open("tun4")) < 0) return (FAILED);
-
+    char *local_host = "172.10.0.10", *remote_host = "172.10.0.20";
+    char device_name[10] = {"tun0"};
+    #if defined(_UNIX) || defined(__APPLE__)
+    if ((fd = utun_open(device_name)) < 0) return (FAILED);
+    #endif
     printf("Setting ip configure\n");
-    set_ip_configure("tun4", "10.1.0.10", "10.1.0.20");
 
+    #if defined(__linux)
+    set_ip_configure(device_name, local_host, remote_host);
+    #elif defined(_UNIX) || defined(__APPLE__)
+    set_ip_configure(device_name, local_host, remote_host);
+    #endif 
+            
+    #if defined(__linux)
+    if ((fd = utun_open(device_name)) < 0) return (FAILED);
+    #endif
     char buffer[MTU];
     memset(buffer, 0, MTU);
     for(;;)

@@ -21,12 +21,6 @@ send_udp_pkt(struct udp_handler * handler, char *dst_host, int port, int timeout
 
       if ((ret = setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))) < 0)
             return (ret);
-
-      if (handler->bind_flag)
-      {
-            if ((ret = bind(sockfd, (struct sockaddr*)&(handler->bind_in), sizeof(handler->bind_in))) < 0)
-                  return (ret);
-      }
       
       if ((ret = sendto(sockfd, buf, size, 0, (struct sockaddr *)&addr, addr_len)) < 0)
             return (ret);

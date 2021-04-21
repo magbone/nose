@@ -213,6 +213,56 @@ PMP_peer_registry_rsp_pkt(char *mstp_id, char *peer_id, char *buf)
 
 
 }
+
+int 
+PMP_find_peer_req_pkt(char *peer_id, char *mstp_id, char *vlan_ipv4, char *buf)
+{
+      if (peer_id == NULL || mstp_id == NULL || vlan_ipv4 == NULL || buf == NULL) return (ERROR);
+
+      PMP_find_peer_req_t *fpreq = 
+                  (PMP_find_peer_req_t *)malloc(sizeof (PMP_find_peer_req_t));
+      if (fpreq == NULL)
+            return (ERROR);
+      
+      fpreq->header.type = F_P;
+      fpreq->header.code = REQ;
+
+      fpreq->vlan_ipv4   = inet_addr(vlan_ipv4);
+      memcpy(fpreq->mstp_id, mstp_id, 20);
+      memcpy(fpreq->peer_id, peer_id, 20);
+
+      memcpy(buf, (char *)fpreq, sizeof(PMP_find_peer_req_t));
+      free(fpreq);
+
+      return (sizeof(PMP_find_peer_req_t));
+}
+
+int 
+PMP_find_peer_rsp_pkt(char *mstp_id, char *peer_id, struct bucket_item item, char *buf)
+{
+      if (mstp_id == NULL || peer_id == NULL || buf == NULL) return (ERROR);
+
+      PMP_find_peer_rsp_t *fprsp = 
+                  (PMP_find_peer_rsp_t *)malloc(sizeof(PMP_find_peer_rsp_t));
+            
+      if (fprsp == NULL) return (ERROR);
+
+      fprsp->header.type = F_P;
+      fprsp->header.code = RSP;
+      
+      fprsp->ipv4 = inet_addr(item.ipv4);
+      fprsp->port = htons(item.port);
+      fprsp->nat_type = htons(item.nat_type);
+      fprsp->vlan_ipv4 = inet_addr(item.vlan_ipv4);
+      memcpy(fprsp->mstp_id, mstp_id, 20);
+      memcpy(fprsp->peer_id, peer_id, 20);
+
+      memcpy(buf, (char *)fprsp, sizeof(PMP_find_peer_rsp_t));
+      free(fprsp);
+
+      return (sizeof(PMP_find_peer_rsp_t));
+}
+
 int 
 PMP_discovery_req_unpack(u_int16_t *port, char *source_id, char *target_id, char *buf, int size)
 {
@@ -253,6 +303,7 @@ PMP_discovery_rsp_unpack(char *source_id, struct bucket *b, char *buf, int size)
             in.s_addr = opt->ipv4;
             char *ipv4 = inet_ntoa(in);
             memcpy(item.ipv4, ipv4, strlen(ipv4));
+            item.ipv4[strlen(ipv4)] = '\0';
             push_front_bucket(b, item);
             offset += sizeof(PMP_options_t);
       }
@@ -300,10 +351,12 @@ PMP_get_peers_rsp_unpack(char *source_id, struct bucket *b, char *buf, int size)
             in.s_addr = gp_opt->ipv4;
             char *ipv4 = inet_ntoa(in);
             memcpy(item.ipv4, ipv4, strlen(ipv4));
+            item.ipv4[strlen(ipv4)] = '\0';
 
             in.s_addr = gp_opt->vlan_ipv4;
             ipv4 = inet_ntoa(in);
             memcpy(item.vlan_ipv4, ipv4, strlen(ipv4));
+            item.vlan_ipv4[strlen(ipv4)] = '\0';
             buf += sizeof(PMP_get_peers_options_t);
       }
       
@@ -326,11 +379,12 @@ PMP_peer_registry_req_unpack(char *peer_id, struct bucket *b, char *buf, int siz
       in.s_addr = pr->ipv4;
       char *ipv4 = inet_ntoa(in);
       memcpy(item.ipv4, ipv4, strlen(ipv4));
-      
+      item.ipv4[strlen(ipv4)] = '\0';
+
       in.s_addr = pr->vlan_ipv4;
       ipv4 = inet_ntoa(in);
       memcpy(item.vlan_ipv4, ipv4, strlen(ipv4));
-      
+      item.vlan_ipv4[strlen(ipv4)] = '\0';
       memcpy(item.node_id, pr->peer_id, 20);
       item.node_id[20] = '\0';
       memcpy(peer_id, item.node_id, 20);
@@ -338,3 +392,25 @@ PMP_peer_registry_req_unpack(char *peer_id, struct bucket *b, char *buf, int siz
       push_front_bucket(b, item);
       return (OK);
 }
+
+int 
+PMP_find_peer_req_unpack(char *peer_id, char *mstp_id, struct bucket *b, struct bucket_item *item, char *buf, int size)
+{
+      if (peer_id == NULL || mstp_id == NULL || item == NULL || b == NULL || buf == NULL) return (ERROR);
+
+      if (size < sizeof(PMP_find_peer_req_t)) return (ERROR);
+
+      PMP_find_peer_req_t *fpreq = (PMP_find_peer_req_t *)buf;
+
+      struct in_addr in;
+      in.s_addr = fpreq->vlan_ipv4;
+      char ipv4[16] = {0};
+      strcpy(ipv4, inet_ntoa(in));
+
+      memcpy(peer_id, fpreq->peer_id, 20);
+      memcpy(mstp_id, fpreq->mstp_id, 20);
+
+      peer_id[20] = mstp_id[20] = '\0';
+      return (get_item_by_vlan_ipv4(b, ipv4, item));
+}
+

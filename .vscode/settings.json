@@ -2,6 +2,8 @@
       "files.associations": {
             "internet": "c",
             "netfwd": "c",
-            "pmp.h": "c"
+            "pmp.h": "c",
+            "errno.h": "c",
+            "stdlib.h": "c"
       }
 }
