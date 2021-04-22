@@ -15,7 +15,7 @@ struct time_val{
       int sec;
       int flag;  // The state of current 
       pthread_t timer_thread;
-      void *(*func)(const void *); // Callback function
+      void *(*func)(void *); // Callback function
       void *args; // The argument passing to function
       struct time_val *next;
 };
@@ -24,7 +24,7 @@ static struct time_val *t_val;
 
 static int terminated_handled = 0;
 
-int set_timeout(int sec, void * (*func)(const void *args), void *args);
+int set_timeout(int sec, void * (*func)(void *args), void *args);
 
 int clear_timeout(int time_id);
 

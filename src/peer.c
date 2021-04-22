@@ -3,10 +3,15 @@
 #include "nose.h"
 #include "utils.h"
 #include "pmp.h"
+#include "pcp.h"
 #include "udp.h"
 #include "timer.h"
+#include "device.h"
+#include "net_config.h"
+
 #include <errno.h>
 #include <string.h>
+#include <unistd.h>
 
 static int 
 create_mstp_conn_sock()
@@ -28,20 +33,18 @@ create_mstp_conn_sock()
 static int 
 registry_peer(struct peer *handler)
 {
-      struct peer_active_hb hb;
+      
       int sockfd = create_mstp_conn_sock();
       int len = 0, addr_len = sizeof(struct sockaddr_in);
+      struct sockaddr_in master_server_addr;
       if (sockfd <= 0) return (ERROR);
 
       fprintf(stdout, "[INFO] Registry peer %s to the master peer %s[%s:%d]\n", handler->peer_id,
                   handler->mstp_id, handler->master_peer_ipv4, handler->master_peer_port);
-
-      hb.sockfd = sockfd;
-      hb.dst_addr.sin_family = AF_INET;
-      hb.dst_addr.sin_addr.s_addr = inet_addr(handler->master_peer_ipv4);
-      hb.dst_addr.sin_port = htons(handler->master_peer_port);
-
-      handler->hb = hb;
+      
+      master_server_addr.sin_family = AF_INET;
+      master_server_addr.sin_port   = htons(handler->master_peer_port);
+      master_server_addr.sin_addr.s_addr = inet_addr(handler->master_peer_ipv4);
 
       char buf[BUFSIZ];
       int try_times = 0;
@@ -51,12 +54,12 @@ registry_peer(struct peer *handler)
 
       do {
 
-            if ((len = sendto(sockfd, buf, size, 0, (struct sockaddr *)&(handler->hb.dst_addr), addr_len)) < 0)
+            if ((len = sendto(sockfd, buf, size, 0, (struct sockaddr *)&master_server_addr, addr_len)) < 0)
             {
                   fprintf(stderr,"[ERROR] (Sendto)len: %d, err_code: %d, err_msg: %s\n", len, errno, strerror(errno));
                   return (len);
             }
-            len = recvfrom(sockfd, buf, BUFSIZ, 0, (struct sockaddr *)&(handler->hb.dst_addr), (socklen_t *)& addr_len);
+            len = recvfrom(sockfd, buf, BUFSIZ, 0, (struct sockaddr *)&master_server_addr, (socklen_t *)& addr_len);
             try_times++;
       }
       while (len < 0 && try_times <= 3); 
@@ -72,9 +75,9 @@ registry_peer(struct peer *handler)
 }
 
 static void* 
-find_remote_peer(const void *args)
+find_remote_peer(void *arg)
 {
-      struct peer *pr = (struct peer *)args;
+      struct peer *pr = (struct peer *)arg;
       char buf[BUFSIZ], peer_id[21] = {0};
       struct udp_handler uh;
 
@@ -106,11 +109,194 @@ find_remote_peer(const void *args)
       {
             fprintf(stdout, "[INFO] Remote peer %s:%d vlan ip: %s\n", remote_item->ipv4,
                         remote_item->port, remote_item->vlan_ipv4);
+            pr->remote_peer_addr.sin_family = AF_INET;
+            pr->remote_peer_addr.sin_port = htons(remote_item->port);
+            pr->remote_peer_addr.sin_addr.s_addr = inet_addr(remote_item->ipv4);
+            rk_sema_post(&(pr->found));
             clear_timeout(pr->find_peer_timeid);
+            
       }
       
       return (NULL);
 }
+
+static void* 
+recv_remote_peer_thread(void *arg)
+{
+      if (arg == NULL) return (NULL);
+      struct peer *pr = (struct peer *)arg;
+      struct sockaddr_in src_addr;
+      int size = sizeof(struct sockaddr_in);
+      for(;;)
+      {
+            char buf[BUFSIZ];
+            memset(buf, 0, BUFSIZ);
+            int len = recvfrom(pr->sockfd, buf, BUFSIZ, 0, 
+            (struct sockaddr *)(&src_addr), (socklen_t *)&size);
+
+            if (len > 0)
+            {
+                  if (src_addr.sin_addr.s_addr == pr->remote_peer_addr.sin_addr.s_addr &&
+                        src_addr.sin_port == pr->remote_peer_addr.sin_port)
+                  fprintf(stdout, "[INFO] Received packet from remote peer(len:%d)\n", len);
+                  recved_pkt_unpack(buf, len, pr);
+            }
+      }
+      return (NULL);
+}
+
+static void* 
+udp_holing_hello(void *arg)
+{
+      if (arg == NULL) return (NULL);
+      struct peer *pr = (struct peer *)arg;
+
+      char buf[BUFSIZ];
+      int len = PCP_hello_syn(buf);
+      if (len == ERROR) return (NULL);
+
+      if (sendto(pr->sockfd, buf, len, 0, 
+            (const struct sockaddr *)&(pr->remote_peer_addr), sizeof(struct sockaddr_in)) < 0)
+      {
+            fprintf(stderr, "[ERROR] (sendto) PCP hello syn packet send failed. err_code:%d, err_msg %s\n", errno, strerror(errno));
+            return (NULL);
+      }
+      
+      return (NULL);
+
+}
+
+static void* 
+peer_heartbeat(void *arg)
+{
+      if (arg == NULL) return (NULL);
+
+      struct peer *pr = (struct peer *)arg;
+      char buf[BUFSIZ];
+      int len = PCP_hb_syn(buf);
+      if (len == ERROR) return (NULL);
+
+      if (sendto_remote_peer(buf, len, pr) < 0)
+            fprintf(stderr, "[ERROR] (sendto) PCP heartbeat syn packet send failed. err_code:%d, err_msg %s\n", errno, strerror(errno));
+      return (NULL);
+}
+
+static void* 
+recv_tun_device_thread(void *arg)
+{
+      if (arg == NULL) return (NULL);
+
+      struct peer *pr = (struct peer *)arg;
+      char buf[BUFSIZ * 2], bbuf[BUFSIZ * 2];
+      int len;
+      for (;;)
+      {
+            if ((len = utun_read(pr->tun_fd, buf)) < 0)
+            {
+                  fprintf(stderr, "[ERROR] Read data from tun device failed, err_code: %d, err_msg: %s\n", errno, strerror(errno));
+                  continue;
+            }
+            
+            len = PCP_payload_pkt(buf, bbuf, len);
+
+            if (sendto_remote_peer(bbuf, len, pr) < 0)
+                  fprintf(stderr, "[ERROR] Send payload to remote failed\n");
+            
+      }
+      
+}
+
+static void 
+recved_pkt_unpack(char *buf, int size, struct peer *pr)
+{
+      if (size < sizeof(struct PCP))
+      {
+            fprintf(stderr, "[ERROR] Malformation PCP packet received\n");
+            return;
+      }
+
+      struct PCP *pcp = (struct PCP*)buf;
+      char _buf[BUFSIZ];
+      int len;
+      switch (pcp->flags)
+      {
+            case F_HELLO_SYN:
+                  len = PCP_hello_ack(_buf);
+                  if (len == ERROR) return;
+                  if (sendto_remote_peer(_buf, len, pr) != OK)
+                  {
+                        fprintf(stderr, "[ERROR] (sendto) PCP hello ack packet send failed. err_code:%d, err_msg %s\n", errno, strerror(errno));
+                        return;
+                  }
+                  break;
+            case F_HELLO_ACK:
+                  clear_timeout(pr->holing_hello_timeid);
+                  // TODO Start to VPN connection.
+                  // Initial tun device, assigned with IP address...
+                  if (init_tun_device(pr) != OK) 
+                  {
+                        fprintf(stderr, "[ERROR] Inital tun device failed\n");
+                        return;
+                  }
+                  pr->heartbeat_timeid = set_timeout(30, peer_heartbeat, pr);
+                  break;
+            case F_HB_SYN:
+                  len = PCP_hb_ack(_buf);
+                  if (len == ERROR) return;
+                  if (sendto_remote_peer(_buf, len, pr) != OK)
+                  {
+                        fprintf(stderr, "[ERROR] (sendto) PCP heartbeat ack packet send failed. err_code:%d, err_msg %s\n", errno, strerror(errno));
+                        return;
+                  }
+                  break;
+            case F_HB_ACK:
+                  // TODO
+                  break;
+            case F_PAYLOAD:
+                  // TODO
+                  len = htons(pcp->len);
+                  memcpy(_buf, buf + sizeof(struct PCP), len);
+
+                  if (utun_write(pr->tun_fd, _buf, len) < 0)
+                  {
+                        fprintf(stderr, "[ERROR] Write data into tun device failed. err_code:%d err_msg:%s\n", errno, strerror(errno));
+                        return;
+                  }
+                  break;
+            default:
+                  break;
+            }
+}
+
+static int 
+init_tun_device(struct peer *pr)
+{
+      char dev_name[20] = "tun0";
+      int fd;
+      #if defined(_UNIX) || defined(__APPLE__)
+      if ((fd = utun_open(dev_name)) < 0) return (FAILED);
+      #endif
+      fprintf(stdout, "[INFO] Setting ip configure\n");
+      set_ip_configure(dev_name, pr->vlan_local_ipv4, pr->vlan_remote_ipv4);
+            
+      #if defined(__linux)
+      if ((fd = utun_open(dev_name)) < 0) return (FAILED);
+      #endif
+      pr->tun_fd = fd;
+      return (OK);
+}
+
+static int 
+sendto_remote_peer(char *buf, int size, struct peer *pr)
+{
+      if (buf == NULL || size <= 0 || pr == NULL) return (ERROR);
+      if (sendto(pr->sockfd, buf, size, 0, 
+            (const struct sockaddr *)&(pr->remote_peer_addr), sizeof(struct sockaddr_in)) < 0)
+            return (ERROR);
+      return (OK);
+}
+
+
 
 int 
 init_peer(struct peer *handler)
@@ -118,7 +304,8 @@ init_peer(struct peer *handler)
       if (handler == NULL) return (ERROR);
       init_bucket(&(handler->peer), NULL, 0);
 
-      if ((handler->sockfd = get_nat_type(handler->source_ipv4, handler->source_port, NULL, 0, &(handler->nt))) < OK)
+      rk_sema_init(&(handler->found), 0);
+      if ((handler->sockfd = get_nat_type(handler->source_ipv4, handler->source_port, handler->stun_server_ipv4, handler->stun_server_port, &(handler->nt))) < OK)
             return (ERROR);
       printf("%s %d %d\n", handler->nt.ipv4, handler->nt.port, handler->nt.nat_type);
       gen_random_node_id(handler->peer_id);
@@ -134,6 +321,15 @@ peer_loop(struct peer *handler)
 
       handler->find_peer_timeid = set_timeout(10, find_remote_peer, handler);
 
-      for(;;);
+      rk_sema_wait(&(handler->found));
+
+      
+      handler->holing_hello_timeid = set_timeout(1, udp_holing_hello, handler);
+      if (pthread_create(&(handler->recv_thread), NULL, recv_remote_peer_thread, handler) < 0)
+            return (ERROR);
+      if (pthread_create(&(handler->tun_thread), NULL, recv_tun_device_thread, handler) < 0)
+            return (ERROR);
+      pthread_join(handler->recv_thread, NULL);
+      pthread_join(handler->tun_thread, NULL);
       return (OK);
 }

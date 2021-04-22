@@ -9,7 +9,7 @@
 
 
 int 
-set_timeout(int sec, void* (*func)(const void *args), void *args)
+set_timeout(int sec, void* (*func)(void *args), void *args)
 {
       if (t_val == NULL)
       {

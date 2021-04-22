@@ -4,7 +4,7 @@
 int main(int argc, char ** argv)
 {
 
-      char ipv4[] = "127.0.0.1";
+      char ipv4[] = "172.20.10.3";
       int port = 9998;
       struct master_peer mstp = {
             .node_id = "aaaaaaaaaaaaaaaaaaaa"

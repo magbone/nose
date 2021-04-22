@@ -11,12 +11,24 @@ int
 set_ip_configure(char * interface, char *src_addr, char *dst_addr)
 {
       char command_line[100];
-      memset(command_line, 0, 100);
-      sprintf(command_line, "ip tuntap add mode tun dev %s", interface);
+      
 #if defined(__linux)
-      if (system(command_line) < 0)
+      int try = 0;
+      char _real[10];
+      do{
+            memset(command_line, 0, 100);
+            memset(_real, 0, 10);
+            sprintf(_real, "tun%d", try);
+            sprintf(command_line, "ip tuntap add mode tun dev %s", _real);
+            if (system(command_line) >= 0)
+            {
+                  strncpy(interface, _real, strlen(_real));
+                  break;
+            }
+      } while (try < 255);
+      if (try >= 255)
       {
-            perror("[ERROR] Add new TUN device failed");
+            fprintf(stderr,  "[ERROR] Add a new tun device failed\n");
             return (FAILED);
       }
 #endif

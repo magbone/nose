@@ -30,9 +30,9 @@ static void on_read(uv_udp_t* handle, ssize_t nread, const uv_buf_t* buf, const 
 // void registry_ping_peer(struct bucket_item *item);
 // void unregistry_ping_peer(struct bucket_item *item);
 
-void* ping_peer(const void *item);
-static void* discovery_proc(const void *bucket);
-static void* get_peers(const void *bucket);
+void* ping_peer(void *item);
+static void* discovery_proc(void *bucket);
+static void* get_peers(void *bucket);
 
 static void shutdown_master_peer();
 

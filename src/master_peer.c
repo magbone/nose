@@ -116,7 +116,7 @@ const struct sockaddr* addr, unsigned flags)
 
 
 void* 
-ping_peer(const void *args)
+ping_peer(void *args)
 {
       if (args == NULL) return NULL;
       
@@ -152,7 +152,7 @@ ping_peer(const void *args)
 }
 
 static void* 
-discovery_proc(const void *bucket)
+discovery_proc(void *bucket)
 {
       if (bucket == NULL) return NULL;
 
@@ -180,7 +180,7 @@ discovery_proc(const void *bucket)
 }
 
 static void* 
-get_peers(const void *bucket)
+get_peers(void *bucket)
 {
       if (bucket == NULL) return NULL;
 

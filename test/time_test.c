@@ -15,7 +15,7 @@ struct val
       void *p;
 };
 
-void * test(const void *args)
+void * test(void *args)
 {
       struct val * a = (struct val *)args;
       printf("num:%d\n", a->a++);

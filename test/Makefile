@@ -64,7 +64,7 @@ nat_type_test:
 	cc nat_type_test.c ../src/stun/nat_test.c ../src/utils.c -lssl -lcrypto -luv -o nat_type_test -D DEBUG $(C_FLAGS)
 
 peer_test:
-	cc peer_test.c ../src/stun/nat_test.c ../src/utils.c ../src/peer.c ../src/pmp.c ../src/bucket.c ../src/udp.c ../src/conf/conf-reader.c ../src/timer.c -lssl -lcrypto -luv -lpthread -o peer_test $(C_FLAGS)
+	cc peer_test.c ../src/stun/nat_test.c ../src/utils.c ../src/peer.c ../src/pmp.c ../src/bucket.c ../src/udp.c ../src/conf/conf-reader.c ../src/timer.c ../src/pcp.c ../src/sem.c -lssl -lcrypto -luv -lpthread -o peer_test $(C_FLAGS) -D DEBUG
 
 conf_test:
 	cc conf_test.c ../src/conf/conf-reader.c -o conf_test $(C_FLAGS)
