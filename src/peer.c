@@ -129,9 +129,9 @@ recv_remote_peer_thread(void *arg)
       int size = sizeof(struct sockaddr_in);
       for(;;)
       {
-            char buf[BUFSIZ];
-            memset(buf, 0, BUFSIZ);
-            int len = recvfrom(pr->sockfd, buf, BUFSIZ, 0, 
+            char buf[BUFSIZ * 2];
+            memset(buf, 0, BUFSIZ * 2);
+            int len = recvfrom(pr->sockfd, buf, BUFSIZ * 2, 0, 
             (struct sockaddr *)(&src_addr), (socklen_t *)&size);
 
             if (len > 0)
@@ -162,6 +162,7 @@ udp_holing_hello(void *arg)
             return (NULL);
       }
       
+      fprintf(stdout, "[INFO] PCP hello syn packet sent\n");
       return (NULL);
 
 }
@@ -178,6 +179,7 @@ peer_heartbeat(void *arg)
 
       if (sendto_remote_peer(buf, len, pr) < 0)
             fprintf(stderr, "[ERROR] (sendto) PCP heartbeat syn packet send failed. err_code:%d, err_msg %s\n", errno, strerror(errno));
+      fprintf(stdout, "[INFO] PCP heartbeat syn packet sent\n");
       return (NULL);
 }
 
@@ -196,7 +198,7 @@ recv_tun_device_thread(void *arg)
                   fprintf(stderr, "[ERROR] Read data from tun device failed, err_code: %d, err_msg: %s\n", errno, strerror(errno));
                   continue;
             }
-            
+            fprintf(stdout, "[INFO] Read data from tun device, %d bytes\n", len);
             len = PCP_payload_pkt(buf, bbuf, len);
 
             if (sendto_remote_peer(bbuf, len, pr) < 0)
@@ -216,11 +218,12 @@ recved_pkt_unpack(char *buf, int size, struct peer *pr)
       }
 
       struct PCP *pcp = (struct PCP*)buf;
-      char _buf[BUFSIZ];
+      char _buf[BUFSIZ * 2];
       int len;
       switch (pcp->flags)
       {
             case F_HELLO_SYN:
+                  fprintf(stdout, "[INFO] Received PCP hello syn packet from other peer\n");
                   len = PCP_hello_ack(_buf);
                   if (len == ERROR) return;
                   if (sendto_remote_peer(_buf, len, pr) != OK)
@@ -228,8 +231,15 @@ recved_pkt_unpack(char *buf, int size, struct peer *pr)
                         fprintf(stderr, "[ERROR] (sendto) PCP hello ack packet send failed. err_code:%d, err_msg %s\n", errno, strerror(errno));
                         return;
                   }
+                  fprintf(stdout, "[INFO] PCP hello ack packet sent\n");
                   break;
             case F_HELLO_ACK:
+                  if (pr->helloed)
+                  {
+                        fprintf(stdout, "[INFO] Previously received PCP hello ack packet, drop it\n");
+                        return;
+                  }
+                  fprintf(stdout, "[INFO] Received PCP hello ack packet from other peer\n");
                   clear_timeout(pr->holing_hello_timeid);
                   // TODO Start to VPN connection.
                   // Initial tun device, assigned with IP address...
@@ -238,7 +248,10 @@ recved_pkt_unpack(char *buf, int size, struct peer *pr)
                         fprintf(stderr, "[ERROR] Inital tun device failed\n");
                         return;
                   }
+                  if (pthread_create(&(pr->tun_thread), NULL, recv_tun_device_thread, pr) < 0)
+                        return;
                   pr->heartbeat_timeid = set_timeout(30, peer_heartbeat, pr);
+                  pr->helloed = 1;
                   break;
             case F_HB_SYN:
                   len = PCP_hb_ack(_buf);
@@ -248,21 +261,24 @@ recved_pkt_unpack(char *buf, int size, struct peer *pr)
                         fprintf(stderr, "[ERROR] (sendto) PCP heartbeat ack packet send failed. err_code:%d, err_msg %s\n", errno, strerror(errno));
                         return;
                   }
+                  fprintf(stdout, "[INFO] Received PCP heartbeat syn packet from other peer\n");
                   break;
             case F_HB_ACK:
                   // TODO
+
+                  fprintf(stdout, "[INFO] Received PCP heartbeat ack packet from other peer\n");
                   break;
             case F_PAYLOAD:
                   // TODO
                   len = htons(pcp->len);
                   memcpy(_buf, buf + sizeof(struct PCP), len);
-
+                  fprintf(stdout, "[INFO] Received PCP payload packet from other peer\n");
                   if (utun_write(pr->tun_fd, _buf, len) < 0)
                   {
                         fprintf(stderr, "[ERROR] Write data into tun device failed. err_code:%d err_msg:%s\n", errno, strerror(errno));
                         return;
                   }
-                  break;
+                  fprintf(stdout, "[INFO] Write data to tun device, %d bytes\n", len);
             default:
                   break;
             }
@@ -303,9 +319,10 @@ init_peer(struct peer *handler)
 {
       if (handler == NULL) return (ERROR);
       init_bucket(&(handler->peer), NULL, 0);
-
+      handler->helloed = 0;
       rk_sema_init(&(handler->found), 0);
-      if ((handler->sockfd = get_nat_type(handler->source_ipv4, handler->source_port, handler->stun_server_ipv4, handler->stun_server_port, &(handler->nt))) < OK)
+      if ((handler->sockfd = get_nat_type(handler->source_ipv4, handler->source_port, 
+                  handler->stun_server_ipv4, handler->stun_server_port, &(handler->nt))) < OK)
             return (ERROR);
       printf("%s %d %d\n", handler->nt.ipv4, handler->nt.port, handler->nt.nat_type);
       gen_random_node_id(handler->peer_id);
@@ -322,14 +339,11 @@ peer_loop(struct peer *handler)
       handler->find_peer_timeid = set_timeout(10, find_remote_peer, handler);
 
       rk_sema_wait(&(handler->found));
-
       
-      handler->holing_hello_timeid = set_timeout(1, udp_holing_hello, handler);
+
+      handler->holing_hello_timeid = set_timeout(2, udp_holing_hello, handler);
       if (pthread_create(&(handler->recv_thread), NULL, recv_remote_peer_thread, handler) < 0)
             return (ERROR);
-      if (pthread_create(&(handler->tun_thread), NULL, recv_tun_device_thread, handler) < 0)
-            return (ERROR);
       pthread_join(handler->recv_thread, NULL);
-      pthread_join(handler->tun_thread, NULL);
       return (OK);
 }

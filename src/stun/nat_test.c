@@ -415,7 +415,7 @@ int get_nat_type(char *source_addr, int source_port,
       const int _source_port = source_port <= 0 ? DEFAULT_SRC_PORT: source_port;
       const int _stun_server_port = stun_server_port <= 0 ? DEFAULT_STUN_PORT : stun_server_port;
 
-      char _stun_server_addr[18];
+      char _stun_server_addr[18] = {0};
       if (gethostbyname1(stun_server_addr == NULL ? (char *)stun_server[0]: stun_server_addr, 
                   _stun_server_addr) != OK)
       {     
@@ -424,5 +424,9 @@ int get_nat_type(char *source_addr, int source_port,
             #endif
             return (ERROR);
       }
+
+      #ifdef DEBUG
+            fprintf(stdout, "[INFO] Test NAT type %s:%d->%s:%d\n", _source_addr, _source_port, _stun_server_addr, _stun_server_port);
+      #endif 
       return do_test(_source_addr, _source_port, _stun_server_addr, _stun_server_port, type);
 }

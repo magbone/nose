@@ -72,6 +72,7 @@ const struct sockaddr* addr, unsigned flags)
                         len = PMP_peer_registry_rsp_pkt(_mstp->node_id, source_id, b);
                         break;
                   case F_P:
+                        fprintf(stdout, "[INFO] Peer bucket size: %d\n", bucket_size(&_mstp->peer_bkt));
                         if ((len = PMP_find_peer_req_unpack(source_id, target_id, &(_mstp->peer_bkt), &item, buf->base, nread)) == ERROR)
                         {
                               fprintf(stderr, "[ERROR] Malformation PMP find peer request packet received\n");
@@ -196,9 +197,9 @@ get_peers(void *bucket)
 
       if (len > 0)
       {
-            if (PMP_get_peers_rsp_unpack(source_id, &_mstp->peer_bkt, buf, len) == OK)
+            if (PMP_get_peers_rsp_unpack(source_id, &(_mstp->peer_bkt), buf, len) == OK)
                   fprintf(stdout, "[INFO] PMP get peers reponse packet receive success\n");
-            else fprintf(stdout, "[INFO] Malformation PMP packet received\n");
+            else fprintf(stdout, "[ERROR] Malformation PMP get peers response packet received\n");
       }
       else
             fprintf(stdout, "[INFO] Remote master peer %s is dead\n", item->node_id);

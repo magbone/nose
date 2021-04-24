@@ -9,7 +9,7 @@
 int main(void)
 {
     int fd;
-    char *local_host = "172.10.0.10", *remote_host = "172.10.0.20";
+    char *local_host = "172.16.0.10", *remote_host = "172.16.0.20";
     char device_name[10] = {"tun0"};
     #if defined(_UNIX) || defined(__APPLE__)
     if ((fd = utun_open(device_name)) < 0) return (FAILED);

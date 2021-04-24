@@ -50,6 +50,9 @@ int main(int argc, char **argv)
             pr.mstp_id);
       
       if (init_peer(&pr) <= 0) return 0;
-      peer_loop(&pr);
+      if (peer_loop(&pr) == ERROR)
+      {
+            printf("fuck off\n");
+      }
       return 0;
 }

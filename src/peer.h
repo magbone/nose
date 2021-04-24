@@ -29,6 +29,7 @@ struct peer
       struct rk_sema found;
       int holing_hello_timeid;
       int heartbeat_timeid;
+      int helloed;
 
       pthread_t recv_thread, tun_thread;
 

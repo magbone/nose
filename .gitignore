@@ -1,2 +1,17 @@
 src/nose
 src/test/master_peer_test
+src/test/tun_test
+src/test/time_test
+src/test/peer_test
+src/test/crypt_test
+src/test/bucket_test
+src/test/conf_test
+src/test/dfa_test
+src/test/nat_type_test
+src/test/pmp_test
+src/test/sha256_test
+src/test/udp_test
+src/test/master_peer_test.dSYM
+src/test/nat_type_test.dSYM
+src/test/peer_test.dSYM
+

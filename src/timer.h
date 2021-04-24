@@ -21,9 +21,9 @@ struct time_val{
 };
 
 static struct time_val *t_val;
-
+static pthread_mutex_t timer_mutex;
 static int terminated_handled = 0;
-
+static int mutex_initalized   = 0;
 int set_timeout(int sec, void * (*func)(void *args), void *args);
 
 int clear_timeout(int time_id);

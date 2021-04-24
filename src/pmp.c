@@ -334,7 +334,7 @@ PMP_get_peers_rsp_unpack(char *source_id, struct bucket *b, char *buf, int size)
       if (size < sizeof(PMP_get_peers_rsp_t)) return (ERROR);
 
       PMP_get_peers_rsp_t* gp_rsp = (PMP_get_peers_rsp_t *)buf;
-      const int count = gp_rsp->count;
+      const int count = htons(gp_rsp->count);
       struct bucket_item item;
 
       if (size < sizeof(PMP_get_peers_rsp_t) + sizeof(PMP_get_peers_options_t) * count) return (ERROR);
@@ -344,7 +344,7 @@ PMP_get_peers_rsp_unpack(char *source_id, struct bucket *b, char *buf, int size)
       for (int i = 0; i < count; i++)
       {
             PMP_get_peers_options_t *gp_opt = (PMP_get_peers_options_t *)buf;
-            item.port = gp_opt->port;
+            item.port = htons(gp_opt->port);
             item.nat_type = gp_opt->nat_type;
             memcpy(item.node_id, gp_opt->node_id, 20);
             struct in_addr in;
@@ -357,6 +357,11 @@ PMP_get_peers_rsp_unpack(char *source_id, struct bucket *b, char *buf, int size)
             ipv4 = inet_ntoa(in);
             memcpy(item.vlan_ipv4, ipv4, strlen(ipv4));
             item.vlan_ipv4[strlen(ipv4)] = '\0';
+            #ifdef DEBUG
+            fprintf(stdout, "[DEBUG] Got peer %s:%d|%s vlan_ipv4:%s\n", 
+                        item.ipv4, item.port, item.node_id, item.vlan_ipv4);
+            #endif // DEBUG
+            push_front_bucket(b, item);
             buf += sizeof(PMP_get_peers_options_t);
       }
       

@@ -52,7 +52,7 @@ bucket_test:
 	cc bucket_test.c ../src/bucket.c ../src/utils.c -lssl -lcrypto -o bucket_test $(C_FLAGS)
 
 master_peer_test:
-	cc master_peer_test.c ../src/server.c ../src/master_peer.c ../src/bucket.c ../src/timer.c ../src/udp.c ../src/pmp.c -luv -lpthread -o master_peer_test -g $(C_FLAGS)
+	cc master_peer_test.c ../src/server.c ../src/master_peer.c ../src/bucket.c ../src/timer.c ../src/udp.c ../src/pmp.c ../src/conf/conf-reader.c -luv -lpthread -o master_peer_test -g $(C_FLAGS) -D DEBUG
 
 pmp_test:
 	cc pmp_test.c ../src/pmp.c ../src/bucket.c -o pmp_test $(C_FLAGS)
@@ -64,7 +64,7 @@ nat_type_test:
 	cc nat_type_test.c ../src/stun/nat_test.c ../src/utils.c -lssl -lcrypto -luv -o nat_type_test -D DEBUG $(C_FLAGS)
 
 peer_test:
-	cc peer_test.c ../src/stun/nat_test.c ../src/utils.c ../src/peer.c ../src/pmp.c ../src/bucket.c ../src/udp.c ../src/conf/conf-reader.c ../src/timer.c ../src/pcp.c ../src/sem.c -lssl -lcrypto -luv -lpthread -o peer_test $(C_FLAGS) -D DEBUG
+	cc peer_test.c ../src/stun/nat_test.c ../src/utils.c ../src/peer.c ../src/pmp.c ../src/bucket.c ../src/udp.c ../src/conf/conf-reader.c ../src/timer.c ../src/pcp.c ../src/sem.c ../src/net_config.c $(TUN_DEVICE_SOURCE) -lssl -lcrypto -luv -lpthread -o peer_test $(C_FLAGS) -D DEBUG -g
 
 conf_test:
 	cc conf_test.c ../src/conf/conf-reader.c -o conf_test $(C_FLAGS)

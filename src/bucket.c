@@ -147,6 +147,9 @@ get_item_by_vlan_ipv4(struct bucket *bkt, char *vlan_ipv4, struct bucket_item *i
       pthread_mutex_lock(&mutex);
       for (int i = 0; i <= bkt->top; i++)
       {
+            #ifdef DEBUG
+            fprintf(stdout, "[DEBUG] Search vlan ipv4 %s, current vlan ipv4 %s\n", bkt->b[i].vlan_ipv4, vlan_ipv4);
+            #endif 
             if (strcmp(bkt->b[i].vlan_ipv4, vlan_ipv4) == 0)
             {
                   *item = bkt->b[i];

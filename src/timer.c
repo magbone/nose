@@ -11,6 +11,14 @@
 int 
 set_timeout(int sec, void* (*func)(void *args), void *args)
 {
+      // if (!mutex_initalized)
+      // {
+      //       pthread_mutex_init(&timer_mutex, NULL);
+      //       mutex_initalized = !mutex_initalized;
+      // }
+      // // LOCK
+      //pthread_mutex_lock(&timer_mutex);
+
       if (t_val == NULL)
       {
             t_val = (struct time_val*)malloc(sizeof(struct time_val));
@@ -41,6 +49,9 @@ set_timeout(int sec, void* (*func)(void *args), void *args)
       new_val->flag = PEDDING;
       new_val->timer_thread = lanuch_task(new_val);
       p->next = new_val;
+
+      //pthread_mutex_unlock(&timer_mutex);
+      // UNLOCK
       return time_id;       
 }
 
@@ -91,7 +102,8 @@ clear_timeout(int time_id)
 {
       if (t_val == NULL) return (ERROR);
       struct time_val *p = t_val, *q = t_val->next;
-
+      // LOCK
+      //pthread_mutex_lock(&timer_mutex);
       while (q != NULL && q->next != NULL)
       {
             if (q->time_id == time_id)
@@ -99,10 +111,13 @@ clear_timeout(int time_id)
             p = p->next;
             q = q->next;
       }
-      
+      if (q == NULL) return (OK);
+
       q->flag = KILLING;
       p->next = q->next;
       while(q->flag != DEAD);
       free(q);
+      // UNLOCK
+      //pthread_mutex_unlock(&timer_mutex);
       return (OK);
 }
