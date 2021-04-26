@@ -34,6 +34,7 @@ int main(int argc, char **argv)
       get_value(&cread, "master_peer_port", value);
       pr.master_peer_port = atoi(value);
 
+      get_value(&cread, "key", pr.key);
 
 
       printf("source_ipv4: %s\t"
@@ -51,8 +52,6 @@ int main(int argc, char **argv)
       
       if (init_peer(&pr) <= 0) return 0;
       if (peer_loop(&pr) == ERROR)
-      {
-            printf("fuck off\n");
-      }
+            printf("Shutdown by error\n");
       return 0;
 }

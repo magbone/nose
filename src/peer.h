@@ -30,7 +30,7 @@ struct peer
       int holing_hello_timeid;
       int heartbeat_timeid;
       int helloed;
-
+      char key[34]; // The key for encrypting and decrypting the data
       pthread_t recv_thread, tun_thread;
 
       int tun_fd;

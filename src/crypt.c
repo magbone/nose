@@ -66,7 +66,7 @@ decrypt_by_aes_256(const char *cipher_text, const int cipher_text_len, char *pla
       if (0 != mbedtls_aes_crypt_cbc(&ctx, MBEDTLS_AES_DECRYPT, cipher_text_len, (unsigned char *)_iv, (unsigned char *)cipher_text, (unsigned char *)plain_text))
       {
             printf("[ERROR] Decrypt error\n");
-            return (OK);
+            return (ERROR);
       }
       return (cipher_text_len);
 }

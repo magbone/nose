@@ -8,10 +8,26 @@
 #include "timer.h"
 #include "device.h"
 #include "net_config.h"
+#include "crypt.h"
 
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef DEBUG
+static inline void show_buf_as_hex(char *buf, int size)
+{
+      for (int i = 0; i < size; i++)
+      {
+            printf("%02x", buf[i] & 0xff);
+
+            if ((i + 1) % 8 == 0) printf("\n");
+            else printf(" ");
+      }
+
+      if (size % 8 != 0) printf("\n");
+}
+#endif // DEBUG
 
 static int 
 create_mstp_conn_sock()
@@ -151,10 +167,14 @@ udp_holing_hello(void *arg)
       if (arg == NULL) return (NULL);
       struct peer *pr = (struct peer *)arg;
 
+      if (pr->helloed)
+      {
+            clear_timeout(pr->holing_hello_timeid);
+            return (NULL);
+      }
       char buf[BUFSIZ];
       int len = PCP_hello_syn(buf);
       if (len == ERROR) return (NULL);
-
       if (sendto(pr->sockfd, buf, len, 0, 
             (const struct sockaddr *)&(pr->remote_peer_addr), sizeof(struct sockaddr_in)) < 0)
       {
@@ -190,7 +210,7 @@ recv_tun_device_thread(void *arg)
 
       struct peer *pr = (struct peer *)arg;
       char buf[BUFSIZ * 2], bbuf[BUFSIZ * 2];
-      int len;
+      int len, crypted_len;
       for (;;)
       {
             if ((len = utun_read(pr->tun_fd, buf)) < 0)
@@ -199,9 +219,28 @@ recv_tun_device_thread(void *arg)
                   continue;
             }
             fprintf(stdout, "[INFO] Read data from tun device, %d bytes\n", len);
-            len = PCP_payload_pkt(buf, bbuf, len);
+            #ifdef DEBUG
+                  fprintf(stdout, "[DEBUG] (utun)Display data before encrypted(%d):\n", len);
+                  show_buf_as_hex(buf, len);
+            #endif // DEBUG
 
-            if (sendto_remote_peer(bbuf, len, pr) < 0)
+            #ifdef DEBUG
+            fprintf(stdout, "[WARN] Primary key: %s\n", pr->key);
+            show_buf_as_hex(pr->key, 32);
+            #endif
+            if ((crypted_len = encrypt_by_aes_256(buf, len, bbuf, pr->key)) == ERROR)
+            {
+                  fprintf(stderr, "[ERROR] Encrypted data error\n");
+                  continue;
+            }
+            #ifdef DEBUG
+                  fprintf(stdout, "[DEBUG] (utun)Display data after encrypted(%d):\n", crypted_len);
+                  show_buf_as_hex(bbuf, crypted_len);
+            #endif // DEBUG
+
+            len = PCP_payload_pkt(bbuf, buf, crypted_len, len);
+
+            if (sendto_remote_peer(buf, len, pr) < 0)
                   fprintf(stderr, "[ERROR] Send payload to remote failed\n");
             
       }
@@ -218,8 +257,9 @@ recved_pkt_unpack(char *buf, int size, struct peer *pr)
       }
 
       struct PCP *pcp = (struct PCP*)buf;
-      char _buf[BUFSIZ * 2];
+      char _buf[BUFSIZ * 2], plaintext[BUFSIZ * 2];
       int len;
+      uint16_t text_len;
       switch (pcp->flags)
       {
             case F_HELLO_SYN:
@@ -271,14 +311,43 @@ recved_pkt_unpack(char *buf, int size, struct peer *pr)
             case F_PAYLOAD:
                   // TODO
                   len = htons(pcp->len);
-                  memcpy(_buf, buf + sizeof(struct PCP), len);
+                  if (size < len + sizeof(struct PCP))
+                  {
+                        fprintf(stderr, "[ERROR] Malformation PCP payload received\n");
+                        return;
+                  }
+                  memcpy(_buf, buf + sizeof(struct PCP) + sizeof(uint16_t), len - sizeof(uint16_t));
+                  text_len = htons(*(uint16_t *)(buf + sizeof(struct PCP)));
+                  #ifdef DEBUG
+                  fprintf(stdout, "[DEBUG] (p2p) Plain text length: %d bytes\n", text_len);
+                  #endif // DEBUG
+                  #ifdef DEBUG
+                  fprintf(stdout, "[DEBUG] (p2p) Display data before decrypted(%d):\n", len - sizeof(uint16_t));
+                  show_buf_as_hex(_buf, len - sizeof(uint16_t));
+                  #endif // DEBUG
+                  // Decrypt
+                  #ifdef DEBUG
+                  fprintf(stdout, "[WARN] Primary key %s\n", pr->key);
+                  show_buf_as_hex(pr->key, 32);
+                  #endif
+                  if (ERROR == decrypt_by_aes_256((const char *)_buf , len - sizeof(uint16_t), plaintext, pr->key))
+                  {
+                        fprintf(stderr, "[INFO] Decrypt data error\n");
+                        return;
+                  }
+                  #ifdef DEBUG
+                  fprintf(stdout, "[DEBUG] (p2p) Display data after decrypted(%d):\n", len - sizeof(uint16_t));
+                  show_buf_as_hex(plaintext, len - sizeof(uint16_t));
+                  #endif // DEBUG
+                  memcpy(_buf, plaintext, text_len);
+                  
                   fprintf(stdout, "[INFO] Received PCP payload packet from other peer\n");
-                  if (utun_write(pr->tun_fd, _buf, len) < 0)
+                  if (utun_write(pr->tun_fd, _buf, text_len) < 0)
                   {
                         fprintf(stderr, "[ERROR] Write data into tun device failed. err_code:%d err_msg:%s\n", errno, strerror(errno));
                         return;
                   }
-                  fprintf(stdout, "[INFO] Write data to tun device, %d bytes\n", len);
+                  fprintf(stdout, "[INFO] Write data to tun device, %d bytes\n", text_len);
             default:
                   break;
             }

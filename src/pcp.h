@@ -18,7 +18,8 @@
 #define F_HB_SYN    4
 #define F_PAYLOAD   5
 
-struct PCP{
+struct PCP
+{
       uint8_t ver; // Must be zero;
       uint8_t flags; 
       uint16_t len; // Payload length
@@ -32,6 +33,6 @@ int PCP_hb_syn(char *buf);
 
 int PCP_hb_ack(char *buf);
 
-int PCP_payload_pkt(char *buf,char *bbuf, int size);
+int PCP_payload_pkt(char *buf, char *bbuf, int all_size, uint16_t text_size);
 
 #endif // !_PCP_H_
