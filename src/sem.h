@@ -11,6 +11,9 @@
 #include <semaphore.h>
 #endif
 
+#include <stdint.h>
+#include <errno.h>
+
 struct rk_sema {
 #ifdef __APPLE__
     dispatch_semaphore_t    sem;

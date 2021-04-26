@@ -358,15 +358,11 @@ init_tun_device(struct peer *pr)
 {
       char dev_name[20] = "tun0";
       int fd;
-      #if defined(_UNIX) || defined(__APPLE__)
       if ((fd = utun_open(dev_name)) < 0) return (FAILED);
-      #endif
+
       fprintf(stdout, "[INFO] Setting ip configure\n");
       set_ip_configure(dev_name, pr->vlan_local_ipv4, pr->vlan_remote_ipv4);
-            
-      #if defined(__linux)
-      if ((fd = utun_open(dev_name)) < 0) return (FAILED);
-      #endif
+
       pr->tun_fd = fd;
       return (OK);
 }

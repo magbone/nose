@@ -252,3 +252,4 @@ The following table describles ![](https://latex.codecogs.com/gif.latex?\delta):
 * Vlan address conflict
 * PMP packet verification(Check **Target ID** field)
 * Symmetric NAT traversal
+* Close the tun device when the program was exited by any reasons in Linux

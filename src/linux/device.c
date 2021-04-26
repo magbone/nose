@@ -10,16 +10,15 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-
+#include <errno.h>
 #include <fcntl.h>
 
 int utun_open(char *device_name)
 {
       struct ifreq ifr;
-      int fd, err;
+      int fd, err, id = 0;
 
-      char *dev_path = "/dev/net/tun";
-
+      char *dev_path = "/dev/net/tun", _dev_name[10] = {0};
       fprintf(stdout, "[INFO] Opening a tun device...\n");
       if ((fd = open(dev_path, O_RDWR)) < 0)
       {
@@ -27,32 +26,40 @@ int utun_open(char *device_name)
             perror("[ERROR] Opening /dev/net/tun");
             return fd;
       }
-
       memset(&ifr, 0, sizeof(ifr));
 
-      ifr.ifr_flags = IFF_TUN | IFF_NO_PI;
+      ifr.ifr_flags = IFF_TUN | IFF_NO_PI | IFF_TUN_EXCL;
 
       if (device_name == NULL || !(*device_name)) return (FAILED);
-      int id = 1;
-      do{
+     
             
-            strncpy(ifr.ifr_name, device_name, IFNAMSIZ);
-
-            if ((err = ioctl(fd, TUNSETIFF, (void *)&ifr)) > 0)
-                  break;
-            
-            sprintf(device_name, "tun%d", id);
-            memset(ifr.ifr_name, 0, IFNAMSIZ);
-      }while (id <= 255);
-      
-      if (id > 255) 
+      do
       {
-            fprintf(stdout, "[ERROR] Device allocation is out of range\n");
-            close(fd);
-            return (FAILED);
+            printf("%d\n", id);
+            memset(_dev_name, 0, 10);
+            sprintf(_dev_name, "tun%d", id++);
+            strncpy(ifr.ifr_name, _dev_name, IFNAMSIZ);
+
+            if ((err = ioctl(fd, TUNSETIFF, (void *)&ifr)) < 0)
+                  fprintf(stderr, "[ERROR] ioctl(TUNSETIFF) err_code: %d, err_msg: %s\n", errno, strerror(errno));
+                  
+
+            if (ioctl(fd, TUNSETPERSIST, 1) >= 0)
+            {
+                  strcpy(device_name, ifr.ifr_name);
+                  break;
+                  
+            }      
+            
+            fprintf(stderr, "[ERROR] ioctl(TUNSETPERSIST) err_code: %d, err_msg: %s\n", errno, strerror(errno));
       }
-      strcpy(device_name, ifr.ifr_name);
-      
+      while(id <= 255);
+
+      if (id == 256)
+      {
+            fprintf(stderr, "[ERROR] The tun device allocation failed");
+            return (ERROR);
+      }
       return fd;
 }
 

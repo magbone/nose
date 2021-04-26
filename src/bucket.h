@@ -11,7 +11,7 @@
 
 struct bucket_item
 {
-      u_int16_t port;
+      uint16_t port;
       char ipv4[16];
       char node_id[21];
 
