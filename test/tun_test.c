@@ -11,20 +11,20 @@ int main(void)
     int fd;
     char *local_host = "172.16.0.10", *remote_host = "172.16.0.20";
     char device_name[10] = {"tun0"};
-    #if defined(_UNIX) || defined(__APPLE__)
-    if ((fd = utun_open(device_name)) < 0) return (FAILED);
-    #endif
-    printf("Setting ip configure\n");
+    // #if defined(_UNIX) || defined(__APPLE__)
+    // if ((fd = utun_open(device_name)) < 0) return (FAILED);
+    // #endif
+    // printf("Setting ip configure\n");
 
-    #if defined(__linux)
-    set_ip_configure(device_name, local_host, remote_host);
-    #elif defined(_UNIX) || defined(__APPLE__)
-    set_ip_configure(device_name, local_host, remote_host);
-    #endif 
-            
-    #if defined(__linux)
+    // #if defined(__linux)
+    // set_ip_configure(device_name, local_host, remote_host);
+    // #elif defined(_UNIX) || defined(__APPLE__)
+    // set_ip_configure(device_name, local_host, remote_host);
+    // #endif 
+    // #if defined(__linux)
     if ((fd = utun_open(device_name)) < 0) return (FAILED);
-    #endif
+    // #endif
+    set_ip_configure(device_name, local_host, remote_host);
     char buffer[MTU];
     memset(buffer, 0, MTU);
     for(;;)
