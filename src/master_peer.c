@@ -9,6 +9,23 @@
 
 static struct master_peer *_mstp = NULL;
 
+void 
+alloc_buffer(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
+{
+      buf->len = suggested_size;
+      buf->base = (char *)malloc(suggested_size);
+}
+
+void 
+free_write_req(uv_write_t *req)
+{
+      write_req_t *wr = (write_req_t *)req;
+      // The following code will trigger the error of pointer being freed was not allocated
+      // if (wr->buf.base != NULL)
+      //       free(wr->buf.base);
+      free(wr);
+}
+
 static void 
 on_read(uv_udp_t* handle, ssize_t nread, const uv_buf_t* buf, 
 const struct sockaddr* addr, unsigned flags)

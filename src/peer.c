@@ -280,9 +280,10 @@ recved_pkt_unpack(char *buf, int size, struct peer *pr)
                         return;
                   }
                   fprintf(stdout, "[INFO] Received PCP hello ack packet from other peer\n");
-                  clear_timeout(pr->holing_hello_timeid);
+                  //clear_timeout(pr->holing_hello_timeid);
                   // TODO Start to VPN connection.
                   // Initial tun device, assigned with IP address...
+                  fprintf(stdout, "[INFO] Open tun device...\n");
                   if (init_tun_device(pr) != OK) 
                   {
                         fprintf(stderr, "[ERROR] Inital tun device failed\n");
