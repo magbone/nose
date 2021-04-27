@@ -65,3 +65,31 @@ int utun_write(int fd, char *buffer, int len)
 {
       return write(fd, buffer, len);
 }
+
+int utun_close(int fd)
+{
+      struct ifreq ifr;
+      ifr.ifru_flags = IFF_TUN 
+            #ifdef IFF_TUN_EXCL
+            | IFF_TUN_EXCL
+            #endif 
+            ;
+      int ret = ERROR;
+      if (ioctl(fd, TUNSETIFF, ifr))
+      {
+            fprintf(stderr, "[ERROR] utun_close(ioctl) TUNSETIFF err_code: %d, err_msg %s\n", 
+                        errno, strerror(errno));
+            goto out;
+      }
+
+      if (ioctl(fd, TUNSETPERSIST, 0))
+      {
+            fprintf(stderr, "[ERROR] utun_close(ioctl) TUNSETPERSIST err_code: %d, err_msg %s\n", 
+                        errno, strerror(errno));
+            goto out;
+      }
+      ret = (OK)
+      out:
+            close(fd);
+            return (ret);
+}

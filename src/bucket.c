@@ -145,7 +145,7 @@ get_item_by_vlan_ipv4(struct bucket *bkt, char *vlan_ipv4, struct bucket_item *i
 {
       if (bkt == NULL || vlan_ipv4 == NULL || item == NULL) return (ERROR);
       pthread_mutex_lock(&mutex);
-      for (int i = 0; i <= bkt->top; i++)
+      for (int i = bkt->top; i >= 0; i--) // Make sure the node information you get is most newest.
       {
             #ifdef DEBUG
             fprintf(stdout, "[DEBUG] Search vlan ipv4 %s, current vlan ipv4 %s\n", bkt->b[i].vlan_ipv4, vlan_ipv4);

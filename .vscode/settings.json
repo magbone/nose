@@ -4,6 +4,8 @@
             "netfwd": "c",
             "pmp.h": "c",
             "errno.h": "c",
-            "stdlib.h": "c"
+            "stdlib.h": "c",
+            "device.h": "c",
+            "types.h": "c"
       }
 }
