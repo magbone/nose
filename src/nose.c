@@ -1,147 +1,128 @@
 
 #include "nose.h"
-#include "device.h"
-#include "net_config.h"
-#include "utils.h"
-#include "client.h"
-#include "server.h"
+#include "peer.h"
+#include "master_peer.h"
+#include "conf/conf-reader.h"
 
-enum WORK_MODE{CLIENT, SERVER};
+enum WORK_MODE{MASTER_PEER, PEER};
 
-int work_mode = CLIENT;
+int work_mode = MASTER_PEER;
 
-int
-check_mode_argus(struct config conf)
-{
-      if (work_mode == CLIENT)
-            return conf.server_host != NULL && conf.local_host != NULL && \
-                  conf.remote_host != NULL && conf.key != NULL && \
-                  conf.server_port > 0;
-      else return conf.server_host != NULL && conf.server_port > 0;
-} 
 
 void 
 print_usage()
 {
       printf("nose is a very simple VPN implementation based on p2p\n\n"
-             "Usage: nose [server|client] \n"
-             "  -l IP address assigned to the utun interface of local machine\n"
-             "  -r IP address assigned to the other peer of p2p\n"
-             "  -sh IP address of public server for forwarding the traffic\n"
-             "  -sp Port number given to the public server\n"
-             "  -k the private key for authentication\n\n\n"
+             "Usage: nose [master-peer|peer] \n"
+             "    -c the configure file path\n\n\n"
              "Examples:\n"
-             "In client:\n"
-             "nose client -l 10.1.0.10 -r 10.1.0.20 -sh x.x.x.x -sp 9090 -k 123\n"
-             "In server:\n"
-             "nose server -sh x.x.x.x -sp 9090\n\n");
+             "On master peer:\n"
+             "nose master-peer -c master_peer.conf\n"
+             "On peer:\n"
+             "nose peeer -c peer.conf\n\n");
 }
 
 int
 main(int argc, char *argv[])
 {
       if (argc <= 1)
-            goto usage;
+      {
+            print_usage();
+            return (0);
+      }
 
-      struct config conf;
-      memset(&conf, 0, sizeof(struct config));
+      char conf_path[256] = {0};
+
 
       for(int i = 1; i < argc; i++)
       {
-            if (strcmp(argv[i], "server") == 0)
-                  work_mode = SERVER;
-            else if (strcmp(argv[i], "-l") == 0)
+            if (strcmp(argv[i], "peer") == 0)
+                  work_mode = PEER;
+            else if (strcmp(argv[i], "-c") == 0)
             {
-                  char *address = ++i < argc ? argv[i] : NULL;
-                  if (!address || !is_valid_ip_address(address))
+                  char *path = ++i < argc ? argv[i] : NULL;
+                  if (NULL == path || !*path)
                   {
-                        printf("Invalid argument: %s\n", address);
-                        goto usage;
+                        print_usage();
+                        return (0);
                   }
-                  conf.local_host = address;
+                  strncpy(conf_path, path, strlen(path));
             }
-            else if (strcmp(argv[i], "-r") == 0)
-            {
-                  char *address = ++i < argc ? argv[i] : NULL;
-                  if (!address || !is_valid_ip_address(address))
-                  {
-                        printf("Invalid argument: %s\n", address);
-                        goto usage;
-                  }
-                  conf.remote_host = address;
-            }
-            else if (strcmp(argv[i], "-sh") == 0)
-            {
-                  char *address = ++i < argc ? argv[i] : NULL;
-                  if (!address ||!is_valid_ip_address(address))
-                  {
-                        printf("Invalid argument: %s\n", address);
-                        goto usage;
-                  }
-                  conf.server_host = address;
-            }
-            else if (strcmp(argv[i], "-sp") == 0)
-            {
-                  char *port_str = ++i < argc ? argv[i] : NULL;
-                  int port;
-                  if (!port_str || !(port = atoi(port_str)))
-                  {
-                        printf("Invalid argument: %s\n", port_str);
-                        goto usage;
-                  }
-                  conf.server_port = port;
-            }
-            else if(strcmp(argv[i], "-k") == 0)
-            {
-                  char *key = ++i < argc ? argv[i] : NULL;
-                  if (!key)
-                  {
-                        printf("Invalid argument: %s\n", key);
-                        goto usage;
-                  }
-                  char hash[64];
-                  gen_sha256(key, strlen(key), hash);
-                  conf.key = hash;
-            }
-      }
-
-      // Check the work mode and its conrresponding arguments.
-      if (!check_mode_argus(conf))
+      }    
+      
+      if (!*conf_path)
       {
-            printf("Lack some arguments\n");
-            goto usage;
-      }
-
-      char dev_name[20] = "tun0";
-
-      if (work_mode == CLIENT)
-      {
-            int fd;
-            #if defined(_UNIX) || defined(__APPLE__)
-            if ((fd = utun_open(dev_name)) < 0) return (FAILED);
-            #endif
-            printf("Setting ip configure\n");
-
-            #if defined(__linux)
-            set_ip_configure(dev_name, conf.local_host, conf.remote_host);
-            #elif defined(_UNIX) || defined(__APPLE__)
-            set_ip_configure(dev_name, conf.local_host, conf.remote_host);
-            #endif 
-            
-            #if defined(__linux)
-            if ((fd = utun_open(dev_name)) < 0) return (FAILED);
-            #endif
-
-            conf.utun_fd = fd;
-
-            return client_loop(conf);
-      }
-      else{
-            fprintf(stdout, "[INFO] Run as server mode\n");
-            return server_loop(conf);
-      }
-
-      usage:
             print_usage();
+            return (0);
+      }
+
+      struct conf_reader cread;
+      if (read_conf(&cread, conf_path, "r") != OK)
+      {
+            fprintf(stderr, "Configure file read filed\n");
+            return (0);
+      }
+
+      if (work_mode == PEER)
+      {
+            struct peer pr;
+            char value[10] = {0};
+            memset(&pr, 0, sizeof(pr));
+            
+            get_value(&cread, "source_ipv4", pr.source_ipv4);
+            get_value(&cread, "master_peer_ipv4", pr.master_peer_ipv4);
+            get_value(&cread, "mstp_id", pr.mstp_id);
+            get_value(&cread, "vlan_local_ipv4", pr.vlan_local_ipv4);
+            get_value(&cread, "vlan_remote_ipv4", pr.vlan_remote_ipv4);
+            get_value(&cread, "stun_server_ipv4", pr.stun_server_ipv4);
+            get_value(&cread, "source_port", value);
+            pr.source_port = atoi(value);
+            memset(value, 0, 10);
+            get_value(&cread, "master_peer_port", value);
+            pr.master_peer_port = atoi(value);
+
+            get_value(&cread, "key", pr.key);
+
+            fprintf(stdout, "source_ipv4: %s\t"
+            "souce_port: %d\t"
+            "stun_server_ipv4: %s\t"
+            "stun_server_port: %d\t"
+            "master_peer_ipv4: %s\t"
+            "mstp_id: %s\n",
+            pr.source_ipv4,
+            pr.source_port,
+            pr.stun_server_ipv4,
+            pr.stun_server_port,
+            pr.master_peer_ipv4,
+            pr.mstp_id);
+      
+            if (init_peer(&pr) <= 0) 
+            {
+                  fprintf(stderr, "Peer initialized failed\n");
+                  return 0;
+            }
+            return peer_loop(&pr);
+      }
+      else
+      {
+            char ipv4[16] = {0}, tmp[6] = {0};
+            int port = 9998;
+
+            struct master_peer mstp;
+            struct bucket_item items[1] = {{0}};
+            memset(&mstp, 0, sizeof(struct master_peer));
+
+            get_value(&cread, "ipv4", ipv4);
+            get_value(&cread, "port", tmp);
+            port = atoi(tmp);
+            memset(tmp, 0, sizeof(tmp));
+            get_value(&cread, "node_id", mstp.node_id);
+            get_value(&cread, "master_peer_ipv4", items[0].ipv4);
+            get_value(&cread, "master_peer_port", tmp);
+            items[0].port = atoi(tmp);
+            get_value(&cread, "mstp_id", items[0].node_id);
+            init_master_peer(&mstp, ipv4, port, items, 1);
+            return (master_peer_loop(&mstp));
+      }
       return 0;
 }

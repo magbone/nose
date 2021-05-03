@@ -18,12 +18,17 @@ struct master_peer
       int get_peers_timeid;
 };
 
+typedef struct {
+      uv_write_t req;
+      uv_buf_t buf;
+}write_req_t;
+
 static uv_loop_t loop;
 static uv_udp_t server;
 static uv_udp_send_t req;
 
-extern void free_write_req(uv_write_t *req);
-extern void alloc_buffer(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf);
+void free_write_req(uv_write_t *req);
+void alloc_buffer(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf);
 
 static void on_read(uv_udp_t* handle, ssize_t nread, const uv_buf_t* buf, const struct sockaddr* addr, unsigned flags);
 

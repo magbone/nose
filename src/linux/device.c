@@ -76,7 +76,7 @@ int utun_write(int fd, char *buffer, int len)
 int utun_close(int fd)
 {
       struct ifreq ifr;
-      ifr.ifru_flags = IFF_TUN 
+      ifr.ifr_flags = IFF_TUN 
             #ifdef IFF_TUN_EXCL
             | IFF_TUN_EXCL
             #endif 
@@ -95,7 +95,7 @@ int utun_close(int fd)
                         errno, strerror(errno));
             goto out;
       }
-      ret = (OK)
+      ret = (OK);
       out:
             close(fd);
             return (ret);
