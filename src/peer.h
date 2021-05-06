@@ -46,6 +46,7 @@ static void* recv_tun_device_thread(void *arg);
 static void* udp_holing_hello(void *arg);
 static void* peer_heartbeat(void *arg);
 
+static void udp_recv_cb(const int sock, short int which, void *arg);
 static void recved_pkt_unpack(char *buf, int size, struct peer *pr);
 static int sendto_remote_peer(char *buf, int size, struct peer *pr);
 
