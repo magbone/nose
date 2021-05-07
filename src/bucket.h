@@ -16,9 +16,12 @@ struct bucket_item
       char node_id[21];
 
       int state;
-      char vlan_ipv4[16];
-      int nat_type; // Only for peer
       time_t join_timestap; 
+
+      // Only for peer
+      char vlan_ipv4[16]; 
+      int nat_type;
+      
 };
 
 #define MAX_BUCKET_SIZE 255

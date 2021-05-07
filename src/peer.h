@@ -3,7 +3,7 @@
 
 #include "stun/nat_test.h"
 #include "bucket.h"
-#include "sem.h"
+
 
 
 struct peer
