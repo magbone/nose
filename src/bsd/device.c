@@ -37,10 +37,15 @@ utun_open(char *device_name) {
 
 int utun_read(int fd, char *buffer)
 {
-      return read(fd, buffer, 1518);
+      return read(fd, buffer, 10240);
 }
 
 int utun_write(int fd, char *buffer, int len)
 {
       return write(fd, buffer, len);
+}
+
+int utun_close(int fd)
+{
+      return (close(fd));
 }

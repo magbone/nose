@@ -1,7 +1,7 @@
 
 
 #include "crypt.h"
-#include "protocols.h"
+#include "vpn_def.h"
 
 #include <mbedtls/config.h>
 #include <mbedtls/aes.h>
