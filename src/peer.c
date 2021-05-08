@@ -215,7 +215,10 @@ peer_heartbeat(int sock, short which, void *arg)
             // Accumulated there syn packets hasn't received ack, the connection may be broken.
             // We should try to resend hello packet to establish connection.
             fprintf(stderr, "[ERROR] It seems that the P2P connection is broken\n");
-            pr->helloed = 0;
+            pr->helloed    = 0;
+            pr->syn_counts = 3;
+            utun_close(pr->tun_fd);
+            fprintf(stdout, "[INFO] Tun device is closed\n");
             event_add(&hello_event, &hello_tv);
             return;
       }

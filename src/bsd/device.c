@@ -44,3 +44,8 @@ int utun_write(int fd, char *buffer, int len)
 {
       return write(fd, buffer, len);
 }
+
+int utun_close(int fd)
+{
+      return (close(fd));
+}

@@ -38,10 +38,10 @@ const char *C_STR[] = {
       NULL
 };
 
-int state_matrix[STATE_M][STATE_M] = {{0       , S_START        , S_AUTHEN         , S_KEY_EX      , S_RUN             }, 
-                                      {S_START , 0              , C_START_AUTHEN   , 0             , 0                 },
-                                      {S_AUTHEN, C_AUTHEN_FAILED, 0                , C_START_KEYEXC, 0                 },
-                                      {S_KEY_EX, 0              , C_KEY_EXEC_FAILED, 0             , C_KEY_EXEC_SUCCESS},
-                                      {S_RUN   , 0              , 0                , 0             , C_SEND_PAY_LOAD   }};
+const int state_matrix[STATE_M][STATE_M] = {{0       , S_START        , S_AUTHEN         , S_KEY_EX      , S_RUN             }, 
+                                            {S_START , 0              , C_START_AUTHEN   , 0             , 0                 },
+                                            {S_AUTHEN, C_AUTHEN_FAILED, 0                , C_START_KEYEXC, 0                 },
+                                            {S_KEY_EX, 0              , C_KEY_EXEC_FAILED, 0             , C_KEY_EXEC_SUCCESS},
+                                            {S_RUN   , 0              , 0                , 0             , C_SEND_PAY_LOAD   }};
 
 #endif // !_DFA_STATE_H

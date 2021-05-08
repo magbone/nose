@@ -17,7 +17,7 @@
 */
 
 int 
-init_dfa(dfa* dfa_handler, int *matrix, int m, int begin_state)
+init_dfa(dfa* dfa_handler, const int *matrix, int m, int begin_state)
 {
       if (dfa_handler == NULL) return (ERROR);
 

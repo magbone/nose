@@ -4,7 +4,7 @@
 
 #include "nose.h"
 #include "config.h"
-#include "protocols.h"
+#include "vpn_def.h"
 
 
 
