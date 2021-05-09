@@ -1,7 +1,7 @@
 
 
 C_FLAGS ?= -std=gnu99 -w -O2
-LIBS ?= -lmbedtls -lmbedx509 -lmbedcrypto -lssl -lcrypto -luv -lpthread
+LIBS ?= -lmbedtls -lmbedx509 -lmbedcrypto -lssl -lcrypto -luv -lpthread -lz -levent
 DARWIN_TUN_DEVICE_SOURCE = "./src/bsd/device.c"
 LINUX_TUN_DEVICE_SOURCE  = "./src/linux/device.c"
 

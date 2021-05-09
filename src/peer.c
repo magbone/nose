@@ -243,7 +243,8 @@ recv_tun_device_thread(void *arg)
 
       struct peer *pr = (struct peer *)arg;
       char buf[BUFSIZ * 11], bbuf[BUFSIZ * 11];
-      int len, crypted_len, compressed_len;
+      int len, crypted_len;
+      uLongf compressed_len;
       for (;;)
       {
             if ((len = utun_read(pr->tun_fd, buf)) < 0)
@@ -273,6 +274,7 @@ recv_tun_device_thread(void *arg)
             #endif // DEBUG
 
             // Compress data
+            compressed_len = crypted_len * 4;
             if (Z_OK != compress((Bytef *)buf, (uLongf *)&compressed_len, (const Bytef *)bbuf, crypted_len))
             {
                   fprintf(stderr, "[ERROR] Data compressed failed\n");
@@ -305,7 +307,7 @@ recved_pkt_unpack(char *buf, int size, struct peer *pr)
       struct PCP *pcp = (struct PCP*)buf;
       char _buf[BUFSIZ * 11], plaintext[BUFSIZ * 11];
       int len;
-      uint16_t uncompressed_len;
+      uLongf uncompressed_len;
       uv_buf_t ubuf;
       switch (pcp->flags)
       {
@@ -387,6 +389,7 @@ recved_pkt_unpack(char *buf, int size, struct peer *pr)
                   show_buf_as_hex(pr->key, 32);
                   #endif
 
+                  uncompressed_len = (len - sizeof(uint16_t)) * 4;
                   // Decompress data
                   if (Z_OK != uncompress((Bytef *)buf, (uLongf *)&uncompressed_len, (const Bytef *)_buf, len - sizeof(uint16_t)))
                   {
