@@ -6,6 +6,8 @@
             "errno.h": "c",
             "stdlib.h": "c",
             "device.h": "c",
-            "types.h": "c"
+            "types.h": "c",
+            "net_config.h": "c",
+            "udp.h": "c"
       }
 }

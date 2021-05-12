@@ -329,7 +329,8 @@ static int do_test(const char *source_addr, const int source_port,
             return (sockfd); 
       }
       // Do TestI
-      if (test1(sockfd, &dst_addr, &src_addr, trans_id, type->ipv4, &(type->port)) == OK)
+      if (test1(sockfd, &dst_addr, &src_addr, trans_id, 
+                  type->ipv4, &(type->port)) == OK)
       {
             if(inet_addr(source_addr) == inet_addr(type->ipv4))
             {
@@ -338,13 +339,11 @@ static int do_test(const char *source_addr, const int source_port,
                               type->ipv4, &(type->port)) == OK)
                   {
                         // Open Internet
-                        // printf("Open Internet\n");
                         type->nat_type = OPEN_INTERNET;
                   }
                   else 
                   { 
                         // Sym. UDP Firewall
-                        // printf("Sym. UDP Firewall\n");
                         type->nat_type = SYM_UDP_FIREWALL;
                   }
             }
@@ -355,7 +354,6 @@ static int do_test(const char *source_addr, const int source_port,
                               type->ipv4, &(type->port)) == OK)
                   {
                         // Full Cone
-                        // printf("Full Cone\n");
                         type->nat_type = FULL_CONE;
                   }
                   else
@@ -370,27 +368,23 @@ static int do_test(const char *source_addr, const int source_port,
                                                 type->ipv4, &(type->port)) == OK)
                                     {
                                           // Restricted
-                                          // printf("Restricted\n");
                                           type->nat_type = RESTRICTED;
                                     }
                                     else
                                     {
                                           // Port Restricted 
-                                          // printf("Port Restricted\n");
                                           type->nat_type = PORT_RESTRICTED;
                                     }
                               }
                               else
                               {
                                     // Symmetric NAT
-                                    // printf("Symmetric NAT\n");
                                     type->nat_type = SYM_NAT;
                               }
                         }
                         else
                         {
                               // Unexpected NAT type
-                              // printf("Unexpected NAT type\n");
                               type->nat_type = UNEXPECTED_NAT_TYPE;
                         }
                   }
@@ -398,7 +392,6 @@ static int do_test(const char *source_addr, const int source_port,
       }
       else 
       {     // UDP Blocked
-            // printf("UDP Blocked\n");
             type->nat_type = UDP_BLOCKED;
       }
       return (sockfd);
