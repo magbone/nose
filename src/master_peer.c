@@ -6,7 +6,6 @@
 #include <string.h>
 
 
-
 static struct event_base *ebase = NULL;
 static struct event ping_event, discovery_event, get_peers_event, udp_event;
 static struct timeval ten_tv;
