@@ -5,6 +5,8 @@
 
 #include "nose.h"
 
+#define SHA256_LEN 32
+
 int is_valid_ip_address(char *ip);
 
 void swap(void *a, void *b, size_t size);

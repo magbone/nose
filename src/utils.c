@@ -10,7 +10,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include <assert.h>
-#include <openssl/sha.h>
+#include <mbedtls/sha256.h>
 
 int 
 is_valid_ip_address(char *ip)
@@ -35,15 +35,19 @@ swap(void *a, void* b, size_t size)
 void 
 gen_sha256(char *input, size_t len, char *output)
 {
-      unsigned char hash[SHA256_DIGEST_LENGTH];
-      SHA256_CTX sha256;
-      SHA256_Init(&sha256);
-      SHA256_Update(&sha256, input, len);
-      SHA256_Final(hash, &sha256);
-      for(int i = 0; i < SHA256_DIGEST_LENGTH; i++)
+      unsigned char hash[SHA256_LEN];
+      mbedtls_sha256_context ctx;
+      mbedtls_sha256_init( &ctx );
+      mbedtls_sha256_starts( &ctx, 0);
+      mbedtls_sha256_update( &ctx, (const unsigned char *)input, len );
+      mbedtls_sha256_finish( &ctx, hash);
+
+      for( int i = 0; i < SHA256_LEN; i++ )
+            sprintf( output + ( i * 2 ), "%02x", hash[i] );
       
-            sprintf(output + (i * 2), "%02x", hash[i]);
       output[64] = 0;
+
+      mbedtls_sha256_free( &ctx );
 }
 
 /**
