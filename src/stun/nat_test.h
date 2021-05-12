@@ -2,9 +2,12 @@
 #define _NAT_TEST_H_
 
 #include <stdint.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
 #include "nat_types.h"
 
-#include <uv.h>
+
 
 #define BIND_REQ              0x0001
 #define BIND_RSP              0x0101
@@ -15,23 +18,23 @@
 
 struct _STUN_message_header
 {
-      u_int16_t stun_message_type;
-      u_int16_t message_length;
-      u_int8_t transaction_id[16];
+      uint16_t stun_message_type;
+      uint16_t message_length;
+      uint8_t transaction_id[16];
 };
 
 struct _STUN_attribute
 {
-      u_int16_t type;
-      u_int16_t length;
+      uint16_t type;
+      uint16_t length;
       // Value (Variable)
 };
 
 struct _STUN_attribute_value
 {
-      u_int16_t pro_family;
-      u_int16_t port;
-      u_int32_t ipv4;
+      uint16_t pro_family;
+      uint16_t port;
+      uint32_t ipv4;
 };
 
 static const char *stun_server[] = {

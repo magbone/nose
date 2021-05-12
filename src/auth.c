@@ -2,7 +2,6 @@
 
 #include "auth.h"
 #include "utils.h"
-#include "protocols.h"
 
 #include <arpa/inet.h>
 

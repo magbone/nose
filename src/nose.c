@@ -19,7 +19,7 @@ print_usage()
              "On master peer:\n"
              "nose master-peer -c master_peer.conf\n"
              "On peer:\n"
-             "nose peeer -c peer.conf\n\n");
+             "nose peer -c peer.conf\n\n");
 }
 
 int
