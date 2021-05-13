@@ -35,7 +35,6 @@ int utun_open(char *device_name)
             
       do
       {
-            printf("%d\n", id);
             memset(_dev_name, 0, 10);
             sprintf(_dev_name, "tun%d", id++);
             strncpy(ifr.ifr_name, _dev_name, IFNAMSIZ);

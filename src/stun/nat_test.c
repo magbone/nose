@@ -4,6 +4,7 @@
 #include "../nose.h"
 
 #include <errno.h>
+#include <arpa/inet.h>
 
 static int 
 _create_nat_test_sock(struct sockaddr_in *addr)

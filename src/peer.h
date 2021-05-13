@@ -15,14 +15,12 @@ struct peer
 
       struct sockaddr_in remote_peer_addr;
       struct bucket peer;
-
-      int sockfd;
+      
       int helloed;
       char key[34]; // The key for encrypting and decrypting the data
       pthread_t tun_thread;
 
       int syn_counts;
-      int tun_fd;
 };
 
 static int create_mstp_conn_sock();
