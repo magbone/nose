@@ -4,10 +4,12 @@
 #include "master_peer.h"
 #include "conf/conf-reader.h"
 
+#define FILE_PATH_LEN 256
+#define VALUE_LEN     10
+
 enum WORK_MODE{MASTER_PEER, PEER};
 
 int work_mode = MASTER_PEER;
-
 
 void 
 print_usage()
@@ -31,7 +33,7 @@ main(int argc, char *argv[])
             return (0);
       }
 
-      char conf_path[256] = {0};
+      char conf_path[FILE_PATH_LEN] = {0};
 
 
       for(int i = 1; i < argc; i++)
@@ -66,7 +68,7 @@ main(int argc, char *argv[])
       if (work_mode == PEER)
       {
             struct peer pr;
-            char value[10] = {0};
+            char value[VALUE_LEN] = {0};
             memset(&pr, 0, sizeof(pr));
             
             get_value(&cread, "source_ipv4", pr.source_ipv4);
@@ -77,7 +79,7 @@ main(int argc, char *argv[])
             get_value(&cread, "stun_server_ipv4", pr.stun_server_ipv4);
             get_value(&cread, "source_port", value);
             pr.source_port = atoi(value);
-            memset(value, 0, 10);
+            memset(value, 0, VALUE_LEN);
             get_value(&cread, "master_peer_port", value);
             pr.master_peer_port = atoi(value);
 
@@ -124,5 +126,6 @@ main(int argc, char *argv[])
             init_master_peer(&mstp, ipv4, port, items, 1);
             return (master_peer_loop(&mstp));
       }
+      
       return 0;
 }

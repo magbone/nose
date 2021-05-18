@@ -14,10 +14,12 @@
 #include <unistd.h>
 #include <event.h>
 #include <zlib.h>
+#include <signal.h>
 
 static struct event udp_event, hb_event, fp_event, hello_event;
 static struct event_base *ebase;
 static struct timeval fp_tv, hello_tv, hb_tv;
+static int udp_fd, tun_fd;
 
 #ifdef DEBUG
 static inline void show_buf_as_hex(char *buf, int size)
@@ -69,18 +71,22 @@ registry_peer(struct peer *handler)
 
       char buf[BUFSIZ];
       int try_times = 0;
-      int size = PMP_peer_registry_req_pkt(handler->mstp_id, handler->peer_id, handler->vlan_local_ipv4, handler->nt, buf);
+      int size = PMP_peer_registry_req_pkt( handler->mstp_id, handler->peer_id, 
+                  handler->vlan_local_ipv4, handler->nt, buf );
 
       if (size < 0) return (ERROR);
 
       do {
 
-            if ((len = sendto(sockfd, buf, size, 0, (struct sockaddr *)&master_server_addr, addr_len)) < 0)
+            if ( ( len = sendto( sockfd, buf, size, 0,
+                        ( struct sockaddr * )&master_server_addr, addr_len ) ) < 0 )
             {
-                  fprintf(stderr,"[ERROR] (Sendto)len: %d, err_code: %d, err_msg: %s\n", len, errno, strerror(errno));
+                  fprintf( stderr,"[ERROR] (Sendto)len: %d, err_code: %d, err_msg: %s\n", 
+                              len, errno, strerror( errno ) );
                   return (len);
             }
-            len = recvfrom(sockfd, buf, BUFSIZ, 0, (struct sockaddr *)&master_server_addr, (socklen_t *)& addr_len);
+            len = recvfrom( sockfd, buf, BUFSIZ, 0, 
+                        ( struct sockaddr * )&master_server_addr, ( socklen_t * )& addr_len );
             try_times++;
       }
       while (len < 0 && try_times <= 3); 
@@ -108,7 +114,8 @@ find_remote_peer(int sock, short which, void *arg)
 
       if (send_udp_pkt(&uh, pr->master_peer_ipv4, pr->master_peer_port, 1, buf, len) < 0)
       {
-            fprintf(stderr, "[ERROR] (sendto) Peer finds remote peer failed. err_code: %d, err_msg: %s\n", errno, strerror(errno));
+            fprintf( stderr, "[ERROR] (sendto) Peer finds remote peer failed."
+                  " err_code: %d, err_msg: %s\n", errno, strerror( errno ) );
             goto next;
       }
 
@@ -190,10 +197,12 @@ udp_holing_hello(int sock, short which, void *arg)
       char buf[BUFSIZ];
       int len = PCP_hello_syn(buf);
       if (len == ERROR) goto next;
-      if (sendto(pr->sockfd, buf, len, 0, 
-            (const struct sockaddr *)&(pr->remote_peer_addr), sizeof(struct sockaddr_in)) < 0)
+      if ( sendto( udp_fd, buf, len, 0, 
+            ( const struct sockaddr * )&pr->remote_peer_addr, 
+             sizeof( struct sockaddr_in ) ) < 0 )
       {
-            fprintf(stderr, "[ERROR] (sendto) PCP hello syn packet send failed. err_code:%d, err_msg %s\n", errno, strerror(errno));
+            fprintf( stderr, "[ERROR] (sendto) PCP hello syn packet send failed. "
+                              "err_code:%d, err_msg %s\n", errno, strerror( errno ) );
             goto next;
       }
       
@@ -217,7 +226,7 @@ peer_heartbeat(int sock, short which, void *arg)
             fprintf(stderr, "[ERROR] It seems that the P2P connection is broken\n");
             pr->helloed    = 0;
             pr->syn_counts = 3;
-            utun_close(pr->tun_fd);
+            utun_close( tun_fd );
             fprintf(stdout, "[INFO] Tun device is closed\n");
             event_add(&hello_event, &hello_tv);
             return;
@@ -227,7 +236,8 @@ peer_heartbeat(int sock, short which, void *arg)
       if (len == ERROR) goto next;
 
       if (sendto_remote_peer(buf, len, pr) < 0)
-            fprintf(stderr, "[ERROR] (sendto) PCP heartbeat syn packet send failed. err_code:%d, err_msg %s\n", errno, strerror(errno));
+            fprintf( stderr, "[ERROR] (sendto) PCP heartbeat syn packet send failed. " 
+                        "err_code:%d, err_msg %s\n", errno, strerror( errno ) );
       fprintf(stdout, "[INFO] PCP heartbeat syn packet sent\n");
       // The syn_count will minus 1 after sent PCP heartbeat syn packet
       pr->syn_counts--;
@@ -247,9 +257,11 @@ recv_tun_device_thread(void *arg)
       uLongf compressed_len;
       for (;;)
       {
-            if ((len = utun_read(pr->tun_fd, buf)) < 0)
+            if ( ( len = utun_read( tun_fd, buf ) ) <= 0 )
             {
-                  fprintf(stderr, "[ERROR] Read data from tun device failed, err_code: %d, err_msg: %s\n", errno, strerror(errno));
+                  fprintf( stderr, "[ERROR] Read data from tun device failed,"
+                              " err_code: %d, err_msg: %s\n", 
+                              errno, strerror( errno ) );
                   continue;
             }
             crypted_len = len;
@@ -275,7 +287,8 @@ recv_tun_device_thread(void *arg)
 
             // Compress data
             compressed_len = crypted_len * 4;
-            if (Z_OK != compress((Bytef *)buf, (uLongf *)&compressed_len, (const Bytef *)bbuf, crypted_len))
+            if ( Z_OK != compress( ( Bytef * )buf, ( uLongf * )&compressed_len, 
+                  ( const Bytef * )bbuf, crypted_len ) )
             {
                   fprintf(stderr, "[ERROR] Data compressed failed\n");
                   return (NULL);
@@ -317,7 +330,8 @@ recved_pkt_unpack(char *buf, int size, struct peer *pr)
                   if (len == ERROR) return;
                   if (sendto_remote_peer(_buf, len, pr) != OK)
                   {
-                        fprintf(stderr, "[ERROR] (sendto) PCP hello ack packet send failed. err_code:%d, err_msg %s\n", errno, strerror(errno));
+                        fprintf( stderr, "[ERROR] (sendto) PCP hello ack packet send failed."
+                              " err_code:%d, err_msg %s\n", errno, strerror( errno ) );
                         return;
                   }
                   fprintf(stdout, "[INFO] PCP hello ack packet sent\n");
@@ -338,7 +352,7 @@ recved_pkt_unpack(char *buf, int size, struct peer *pr)
                         fprintf(stderr, "[ERROR] Inital tun device failed\n");
                         return;
                   }
-                  if (pthread_create(&(pr->tun_thread), NULL, recv_tun_device_thread, pr) < 0)
+                  if ( pthread_create( &pr->tun_thread, NULL, recv_tun_device_thread, pr ) < 0 )
                         return;
 
                   pr->helloed = 1;
@@ -349,16 +363,16 @@ recved_pkt_unpack(char *buf, int size, struct peer *pr)
 
                   // TODO Start to establish VPN connection.
                   // Send authenication request packet to the remote peer
-                  // Set state of vpn's dfa to C0(Start authenicating)
                   // Such API as following denfinition
-                  // vpn_set_dfa_state(&pr->vpn_handler, C0);
+                  // vpn_init( vpn_handler, vpn_ );
                   break;
             case F_HB_SYN:
                   len = PCP_hb_ack(_buf);
                   if (len == ERROR) return;
                   if (sendto_remote_peer(_buf, len, pr) != OK)
                   {
-                        fprintf(stderr, "[ERROR] (sendto) PCP heartbeat ack packet send failed. err_code:%d, err_msg %s\n", errno, strerror(errno));
+                        fprintf( stderr, "[ERROR] (sendto) PCP heartbeat ack packet send failed."
+                              " err_code:%d, err_msg %s\n", errno, strerror( errno ) );
                         return;
                   }
                   fprintf(stdout, "[INFO] Received PCP heartbeat syn packet from other peer\n");
@@ -391,18 +405,25 @@ recved_pkt_unpack(char *buf, int size, struct peer *pr)
 
                   uncompressed_len = (len - sizeof(uint16_t)) * 4;
                   // Decompress data
-                  if (Z_OK != uncompress((Bytef *)buf, (uLongf *)&uncompressed_len, (const Bytef *)_buf, len - sizeof(uint16_t)))
+                  if ( Z_OK != uncompress( ( Bytef * )buf, ( uLongf * )&uncompressed_len,
+                         ( const Bytef * )_buf, len - sizeof( uint16_t ) ) )
                   {
                         fprintf(stderr, "[ERROR] Data uncompressed failed\n");
                         return;
                   }
+
                   #ifdef DEBUG
                   fprintf(stdout, "[DEBUG] Display data after decompressed(%d):\n", uncompressed_len);
                   show_buf_as_hex(buf, uncompressed_len);
                   #endif // DEBUG
+                  
+                  // TODO VPN
+                  // API defined like this:
+                  // vpn_
 
                   // Decrypt
-                  if (ERROR == decrypt_by_aes_256((const char *)buf , uncompressed_len, plaintext, pr->key))
+                  if ( ERROR == decrypt_by_aes_256( ( const char *)buf , 
+                              uncompressed_len, plaintext, pr->key ) )
                   {
                         fprintf(stderr, "[INFO] Decrypt data error\n");
                         return;
@@ -414,9 +435,10 @@ recved_pkt_unpack(char *buf, int size, struct peer *pr)
                   fprintf(stdout, "[DEBUG] Received PCP payload packet from other peer\n");
                   #endif // DEBUG
 
-                  if (utun_write(pr->tun_fd, plaintext, text_len) < 0)
+                  if ( utun_write( tun_fd, plaintext, text_len ) <= 0 )
                   {
-                        fprintf(stderr, "[ERROR] Write data into tun device failed. err_code:%d err_msg:%s\n", errno, strerror(errno));
+                        fprintf( stderr, "[ERROR] Write data into tun device failed." 
+                                    "err_code:%d err_msg:%s\n", errno, strerror( errno ) );
                         return;
                   }
 
@@ -433,13 +455,12 @@ static int
 init_tun_device(struct peer *pr)
 {
       char dev_name[20] = "tun0";
-      int fd;
-      if ((fd = utun_open(dev_name)) < 0) return (FAILED);
+      
+      if ( ( tun_fd = utun_open( dev_name ) ) <= 0 ) return ( FAILED );
 
       fprintf(stdout, "[INFO] Setting ip configure\n");
       set_ip_configure(dev_name, pr->vlan_local_ipv4, pr->vlan_remote_ipv4);
 
-      pr->tun_fd = fd;
       return (OK);
 }
 
@@ -447,13 +468,25 @@ static int
 sendto_remote_peer(char *buf, int size, struct peer *pr)
 {
       if (buf == NULL || size <= 0 || pr == NULL) return (ERROR);
-      if (sendto(pr->sockfd, buf, size, 0, 
-            (const struct sockaddr *)&(pr->remote_peer_addr), sizeof(struct sockaddr_in)) < 0)
+      if ( sendto( udp_fd, buf, size, 0, 
+            ( const struct sockaddr * )&pr->remote_peer_addr, sizeof( struct sockaddr_in ) ) < 0 )
             return (ERROR);
       return (OK);
 }
 
-
+static void
+cancel_handle( int sig )
+{
+      if ( sig == SIGINT)
+      {
+            if ( tun_fd > 0 )
+                  utun_close( tun_fd );
+            if ( udp_fd > 0 )
+                  close( udp_fd );
+            printf("\nQuit\n");
+            exit(0);
+      }
+}
 
 int 
 init_peer(struct peer *handler)
@@ -463,8 +496,8 @@ init_peer(struct peer *handler)
       
       handler->helloed    = 0;
       handler->syn_counts = 3;
-      if ((handler->sockfd = get_nat_type(handler->source_ipv4, handler->source_port, 
-                  handler->stun_server_ipv4, handler->stun_server_port, &(handler->nt))) < OK)
+      if ( ( udp_fd = get_nat_type( handler->source_ipv4, handler->source_port, 
+                  handler->stun_server_ipv4, handler->stun_server_port, &handler->nt ) ) < OK )
       {
             fprintf(
                   stderr, "[ERROR] An error occured when get nat type\n"
@@ -477,7 +510,8 @@ init_peer(struct peer *handler)
             fprintf(stderr, "[ERROR]  Incapable of UDP connectivity.\n");
             return (ERROR);
       }
-      fprintf(stdout, "[INFO] External IP: %s External Port: %d NAT Type: %d\n", handler->nt.ipv4, handler->nt.port, handler->nt.nat_type);
+      fprintf( stdout, "[INFO] External IP: %s External Port: %d NAT Type: %d\n",
+             handler->nt.ipv4, handler->nt.port, handler->nt.nat_type );
       gen_random_node_id(handler->peer_id);
 
 
@@ -498,8 +532,10 @@ peer_loop(struct peer *handler)
       event_assign(&fp_event, ebase, -1, 0, find_remote_peer, handler);
       event_add(&fp_event, &fp_tv);
       
-      event_assign(&udp_event, ebase, handler->sockfd, EV_READ | EV_PERSIST, udp_recv_cb, handler);
+      event_assign( &udp_event, ebase, udp_fd, EV_READ | EV_PERSIST, udp_recv_cb, handler );
       event_add(&udp_event, 0);
       
+      signal( SIGINT, cancel_handle );
+
       return (event_base_loop(ebase, 0));
 }

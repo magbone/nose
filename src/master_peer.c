@@ -1,14 +1,16 @@
 
-#include "master_peer.h"
 #include "pmp.h"
 #include "udp.h"
+#include "master_peer.h"
 
 #include <string.h>
-
+#include <signal.h>
+#include <unistd.h>
 
 static struct event_base *ebase = NULL;
 static struct event ping_event, discovery_event, get_peers_event, udp_event;
 static struct timeval ten_tv;
+static int sock;
 
 static void 
 udp_recv_cb(int sock, short which, void *arg)
@@ -93,6 +95,7 @@ udp_recv_cb(int sock, short which, void *arg)
                         }
                         fprintf(stdout, "[INFO] Received find peer\n");
                         wlen = PMP_find_peer_rsp_pkt(mstp->node_id, source_id, item, b);
+                        break;
                   default:
                         break;
                   }
@@ -110,15 +113,16 @@ udp_recv_cb(int sock, short which, void *arg)
       }
 
       if (wlen > 0)
+      {
             if (sendto(sock, b, wlen, 0, (struct sockaddr *)&raddr, sizeof(raddr)) < 0)
                   fprintf(stderr, "[ERROR] (sendto) err_code: %d, err_msg: %s\n", errno, strerror(errno));
-
-
+      }
+      else 
+            fprintf( stderr, "[ERROR] Processing packet error: %d\n", wlen );
       // fprintf(stdout, "[ERROR] Incompatible node id %s(received) -> %s(yours)\n", target_id, _mstp->node_id);
 
 
 }
-
 
 static void
 ping_peer(int sock, short which, void *arg)
@@ -227,6 +231,18 @@ get_peers(int sock, short which, void *arg)
             event_add(&get_peers_event, &ten_tv);
 }
 
+static void 
+cancel_handle( int sig )
+{
+      if ( sig == SIGINT )
+      {
+            if ( sock > 0)
+                  close( sock );
+            event_base_loopbreak( ebase );
+            printf("\nQuit\n");
+            exit(0);
+      }
+}
 
 int 
 init_master_peer(struct master_peer *mstp, char *ipv4, int port, struct bucket_item *items, int item_size)
@@ -263,7 +279,7 @@ master_peer_loop(struct master_peer *mstp)
       addr.sin_family = AF_INET;
       addr.sin_port = htons(mstp->port);
       
-      int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+      sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
       if (sock <= 0) return (ERROR);
 
@@ -290,6 +306,8 @@ master_peer_loop(struct master_peer *mstp)
 
 
       fprintf(stdout, "[INFO] Master peer server runs as %s:%d\n", mstp->ipv4, mstp->port);
+
+      signal( SIGINT, cancel_handle );
 
       return (event_base_loop(ebase, 0));
 }
