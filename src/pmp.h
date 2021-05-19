@@ -80,7 +80,12 @@ typedef struct PMP_peer_registry_req
 {     
       struct PMP_Header header;
       u_int16_t nat_type;
-      u_int16_t reserved;
+      
+      union{
+            uint16_t reserved;
+            uint16_t fprsp_type;
+      };
+      
       u_int16_t port;
       u_int32_t ipv4;
       u_int32_t vlan_ipv4;

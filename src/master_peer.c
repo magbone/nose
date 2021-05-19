@@ -24,7 +24,8 @@ udp_recv_cb(int sock, short which, void *arg)
       struct master_peer *mstp = (struct master_peer *)arg;
       socklen_t raddr_len = sizeof(struct sockaddr_in);
 
-      if (( rlen = recvfrom( sock, b, BUFSIZ, 0, (struct sockaddr *)&raddr, &raddr_len ) ) < 0)
+      if (( rlen = recvfrom( sock, b, BUFSIZ, 0, 
+                  (struct sockaddr *)&raddr, &raddr_len ) ) < 0)
       {
             fprintf(stderr, "[ERROR] (recvfrom) err_code: %d, err_msg: %s\n",
                         errno, strerror(errno));
@@ -83,16 +84,18 @@ udp_recv_cb(int sock, short which, void *arg)
                         break;
                   case F_P:
                         fprintf(stdout, "[INFO] Peer bucket size: %d\n", bucket_size(&mstp->peer_bkt));
-                        if ((wlen = PMP_find_peer_req_unpack(source_id, target_id, &(mstp->peer_bkt), &item, b, rlen)) == ERROR)
+                        if ( ( wlen = PMP_find_peer_req_unpack(source_id, target_id, 
+                                    &mstp->peer_bkt, &item, b, rlen ) ) == ERROR )
                         {
                               fprintf(stderr, "[ERROR] Malformation PMP find peer request packet received\n");
                               return;
                         }
                         else if (wlen == FAILED)
                         {
-                              fprintf(stderr, "[ERROR] Not find the remote peer\n");
-                              return;
+                              memcpy( &item, get_front_bucket( &mstp->master_peer_bkt ), sizeof( struct bucket_item ) );
+                              item.nat_type = -1; 
                         }
+                             
                         fprintf(stdout, "[INFO] Received find peer\n");
                         wlen = PMP_find_peer_rsp_pkt(mstp->node_id, source_id, item, b);
                         break;
@@ -140,7 +143,8 @@ ping_peer(int sock, short which, void *arg)
 
       if (item == NULL) goto next;
 
-      fprintf(stdout, "[INFO] Send PMP ping request packet from %s to %s\n", mstp->node_id, item->node_id);
+      fprintf( stdout, "[INFO] Send PMP ping request packet from %s to %s\n", 
+                  mstp->node_id, item->node_id );
 
       int len = PMP_ping_req_pkt(mstp->node_id, item->node_id, buf);
       send_udp_pkt(&uh, item->ipv4, item->port, 1, buf, len);
@@ -159,7 +163,7 @@ ping_peer(int sock, short which, void *arg)
       else 
       {
             fprintf(stdout, "[INFO] Remote master peer %s is dead\n", item->node_id);
-            // TODO remove the item to the bottom of bucket.
+            bucket_move_to_bottom( &mstp->master_peer_bkt, item->node_id );
       }
       
       next:
@@ -181,7 +185,8 @@ discovery_proc(int sock, short which, void *arg)
       char buf[1024], source_id[21];
       int len = PMP_discovery_req_pkt(item->port, mstp->node_id, item->node_id, buf);
 
-      fprintf(stdout, "[INFO] Send PMP discovery request packet from %s to %s\n", mstp->node_id, item->node_id);
+      fprintf( stdout, "[INFO] Send PMP discovery request packet from %s to %s\n", 
+                  mstp->node_id, item->node_id );
 
       send_udp_pkt(&handler, item->ipv4, item->port, 1, buf, len);
 

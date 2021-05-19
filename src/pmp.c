@@ -257,6 +257,8 @@ PMP_find_peer_rsp_pkt(char *mstp_id, char *peer_id, struct bucket_item item, cha
       memcpy(fprsp->mstp_id, mstp_id, 20);
       memcpy(fprsp->peer_id, peer_id, 20);
 
+      if ( item.nat_type == -1 ) fprsp->fprsp_type = htons( 1 );
+
       memcpy(buf, (char *)fprsp, sizeof(PMP_find_peer_rsp_t));
       free(fprsp);
 

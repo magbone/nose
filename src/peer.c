@@ -105,9 +105,11 @@ static void
 find_remote_peer(int sock, short which, void *arg)
 {
       struct peer *pr = (struct peer *)arg;
-      char buf[BUFSIZ], peer_id[21] = {0};
-      struct udp_handler uh;
+      char buf[BUFSIZ], peer_id[21] = {0}, s_mstp_id[21] = {0};
+      char vlan_remote_ipv4[16] = {0}, s_mstp_ipv4[16] = {0};
 
+      struct udp_handler uh;
+      int s_mstp_port = pr->master_peer_port, try_times = 6;
       int len = PMP_find_peer_req_pkt(pr->peer_id ,pr->mstp_id, pr->vlan_remote_ipv4, buf);
 
       if (len < 0) goto next;
@@ -126,14 +128,14 @@ find_remote_peer(int sock, short which, void *arg)
             goto next;
       }
 
-      if (PMP_find_peer_rsp_unpack(peer_id, &(pr->peer), buf, len) != OK)
+      if ( PMP_find_peer_rsp_unpack( peer_id, &pr->peer, buf, len ) != OK )
       {
             fprintf(stderr, "[ERROR] Malformation PMP find peer packet\n");
             close(uh.sockfd);
             goto next;
       }
 
-      struct bucket_item *remote_item = get_front_bucket(&(pr->peer));
+      struct bucket_item *remote_item = get_front_bucket( &pr->peer );
 
       if (remote_item != NULL)
       {

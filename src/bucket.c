@@ -161,6 +161,25 @@ get_item_by_vlan_ipv4(struct bucket *bkt, char *vlan_ipv4, struct bucket_item *i
       return (FAILED);
 }
 
+int 
+bucket_move_to_bottom( struct bucket *bkt, char *node_id )
+{
+      pthread_mutex_lock( &mutex );
+      int i;
+      for ( i = bkt->top ; i >= 0; i-- )
+           if ( strcmp( bkt->b[i].node_id, node_id ) == 0 )
+                  break;
+
+      struct bucket_item tmp = bkt->b[i];
+      for ( ; i > 0; i-- )
+            bkt->b[i] = bkt->b[i - 1];
+      bkt->b[0] = tmp;
+      // Update visted
+      bkt->visited = ( bkt->visited - 1 ) % ( bkt->top + 1 );
+      pthread_mutex_unlock( &mutex );
+      return ( OK );
+}
+
 void 
 destory_bucket(struct bucket *bkt)
 {
