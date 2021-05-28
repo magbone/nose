@@ -12,7 +12,6 @@ This project built depends on some third party open sources.
 Dependencies list:
 ```
 libevent 
-openssl 1.1.1d
 mbedtls 2.25.0
 ```
 
