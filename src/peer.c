@@ -37,30 +37,18 @@ static inline void show_buf_as_hex(char *buf, int size)
 #endif // DEBUG
 
 static int 
-create_mstp_conn_sock()
+registry_peer(struct peer *handler)
 {
-
-      int sockfd, ret;
-      
-      if ((sockfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) return (sockfd);
+      int len = 0, ret, addr_len = sizeof(struct sockaddr_in);
       struct timeval tv;
       tv.tv_sec = 1;
       tv.tv_usec = 0;
 
-      if ((ret = setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv))) < 0)
-            return (ret);
-
-      return (sockfd);
-}
-
-static int 
-registry_peer(struct peer *handler)
-{
+      if ( ( ret = setsockopt( udp_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof( tv ) ) ) < 0 )
+            return ( ret );
       
-      int sockfd = create_mstp_conn_sock();
-      int len = 0, addr_len = sizeof(struct sockaddr_in);
       struct sockaddr_in master_server_addr;
-      if (sockfd <= 0) return (ERROR);
+      if ( udp_fd <= 0 ) return (ERROR);
 
       fprintf(stdout, "[INFO] Registry peer %s to the master peer %s[%s:%d]\n", handler->peer_id,
                   handler->mstp_id, handler->master_peer_ipv4, handler->master_peer_port);
@@ -78,14 +66,14 @@ registry_peer(struct peer *handler)
 
       do {
 
-            if ( ( len = sendto( sockfd, buf, size, 0,
+            if ( ( len = sendto( udp_fd, buf, size, 0,
                         ( struct sockaddr * )&master_server_addr, addr_len ) ) < 0 )
             {
                   fprintf( stderr,"[ERROR] (Sendto)len: %d, err_code: %d, err_msg: %s\n", 
                               len, errno, strerror( errno ) );
                   return (len);
             }
-            len = recvfrom( sockfd, buf, BUFSIZ, 0, 
+            len = recvfrom( udp_fd, buf, BUFSIZ, 0, 
                         ( struct sockaddr * )&master_server_addr, ( socklen_t * )& addr_len );
             try_times++;
       }
@@ -225,12 +213,13 @@ peer_heartbeat(int sock, short which, void *arg)
       {
             // Accumulated there syn packets hasn't received ack, the connection may be broken.
             // We should try to resend hello packet to establish connection.
-            fprintf(stderr, "[ERROR] It seems that the P2P connection is broken\n");
+            fprintf( stderr, "[ERROR] It seems that the P2P connection is broken\n" );
             pr->helloed    = 0;
             pr->syn_counts = 3;
             utun_close( tun_fd );
-            fprintf(stdout, "[INFO] Tun device is closed\n");
-            event_add(&hello_event, &hello_tv);
+            fprintf( stdout, "[INFO] Tun device is closed\n" );
+            fprintf( stdout, "[INFO] Try to reconnect to remote\n" );
+            event_add( &hello_event, &hello_tv );
             return;
       }
       char buf[BUFSIZ];
@@ -481,12 +470,14 @@ cancel_handle( int sig )
 {
       if ( sig == SIGINT)
       {
+            #if defined( __linux )
             if ( tun_fd > 0 )
                   utun_close( tun_fd );
+            #endif
             if ( udp_fd > 0 )
                   close( udp_fd );
-            printf("\nQuit\n");
-            exit(0);
+            printf( "\nQuit\n" );
+            exit( 0 );
       }
 }
 

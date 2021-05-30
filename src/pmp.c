@@ -124,7 +124,7 @@ PMP_get_peers_rsp_pkt(char *target_id, struct bucket_item *items, int size, char
 {
       int buf_size = 0;
 
-      if (target_id == NULL || items == NULL || buf == NULL || size <= 0) return (ERROR);
+      if (target_id == NULL || items == NULL || buf == NULL || size < 0) return (ERROR);
 
       PMP_get_peers_rsp_t* gp_rsp = (PMP_get_peers_rsp_t *)
                   malloc(sizeof(PMP_get_peers_rsp_t));

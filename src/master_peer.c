@@ -122,7 +122,6 @@ udp_recv_cb(int sock, short which, void *arg)
       }
       else 
             fprintf( stderr, "[ERROR] Processing packet error: %d\n", wlen );
-      // fprintf(stdout, "[ERROR] Incompatible node id %s(received) -> %s(yours)\n", target_id, _mstp->node_id);
 
 
 }
@@ -162,7 +161,7 @@ ping_peer(int sock, short which, void *arg)
       }
       else 
       {
-            fprintf(stdout, "[INFO] Remote master peer %s is dead\n", item->node_id);
+            fprintf(stdout, "[INFO] (ping) Remote master peer %s is dead\n", item->node_id);
             bucket_move_to_bottom( &mstp->master_peer_bkt, item->node_id );
       }
       
@@ -181,16 +180,16 @@ discovery_proc(int sock, short which, void *arg)
 
       struct master_peer *mstp = (struct master_peer *) arg;     
       struct bucket_item *item = get_front_bucket(&mstp->master_peer_bkt);
-      struct udp_handler handler;
+      struct udp_handler uh;
       char buf[1024], source_id[21];
       int len = PMP_discovery_req_pkt(item->port, mstp->node_id, item->node_id, buf);
 
       fprintf( stdout, "[INFO] Send PMP discovery request packet from %s to %s\n", 
                   mstp->node_id, item->node_id );
 
-      send_udp_pkt(&handler, item->ipv4, item->port, 1, buf, len);
+      send_udp_pkt( &uh, item->ipv4, item->port, 1, buf, len );
 
-      len = recv_udp_pkt(&handler, buf);
+      len = recv_udp_pkt( &uh, buf );
 
       if (len > 0)
       {
@@ -198,7 +197,7 @@ discovery_proc(int sock, short which, void *arg)
                   fprintf(stdout, "[INFO] PMP discovery reponse packet receive success\n");
             else fprintf(stdout, "[INFO] Malformation PMP packet received\n");
 
-      }else fprintf(stdout, "[INFO] Remote master peer %s is dead\n", item->node_id);
+      }else fprintf(stdout, "[INFO] (discovery_pro) Remote master peer %s is dead\n", item->node_id);
 
       next:
             event_add(&discovery_event, &ten_tv);
@@ -230,7 +229,7 @@ get_peers(int sock, short which, void *arg)
             else fprintf(stdout, "[ERROR] Malformation PMP get peers response packet received\n");
       }
       else
-            fprintf(stdout, "[INFO] Remote master peer %s is dead\n", item->node_id);
+            fprintf(stdout, "[INFO] (get_peers) Remote master peer %s is dead\n", item->node_id);
 
       next:
             event_add(&get_peers_event, &ten_tv);
@@ -241,7 +240,7 @@ cancel_handle( int sig )
 {
       if ( sig == SIGINT )
       {
-            if ( sock > 0)
+            if ( sock > 0 )
                   close( sock );
             event_base_loopbreak( ebase );
             printf("\nQuit\n");

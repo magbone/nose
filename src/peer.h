@@ -23,8 +23,6 @@ struct peer
       int syn_counts;
 };
 
-static int create_mstp_conn_sock();
-
 static int registry_peer(struct peer *handler);
 
 static void find_remote_peer(int sock, short which, void *arg);
