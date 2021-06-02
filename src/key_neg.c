@@ -50,12 +50,12 @@ key_neg_make_public( struct key_neg *neg )
             goto exit;
       }
       
-      return ( OK );
+      ret = ( OK );
       exit:
             mbedtls_ecdh_free( &neg->ctx );
             mbedtls_ctr_drbg_free( &neg->ctr_drbg );
             mbedtls_entropy_free( &neg->entropy );
-            return ( ERROR );
+            return ( ret );
 }
 
 int 

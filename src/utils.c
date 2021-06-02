@@ -38,9 +38,9 @@ gen_sha256(char *input, size_t len, char *output)
       unsigned char hash[SHA256_LEN];
       mbedtls_sha256_context ctx;
       mbedtls_sha256_init( &ctx );
-      mbedtls_sha256_starts( &ctx, 0);
-      mbedtls_sha256_update( &ctx, (const unsigned char *)input, len );
-      mbedtls_sha256_finish( &ctx, hash);
+      mbedtls_sha256_starts_ret( &ctx, 0);
+      mbedtls_sha256_update_ret( &ctx, (const unsigned char *)input, len );
+      mbedtls_sha256_finish_ret( &ctx, hash);
 
       for( int i = 0; i < SHA256_LEN; i++ )
             sprintf( output + ( i * 2 ), "%02x", hash[i] );

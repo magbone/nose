@@ -3,6 +3,7 @@
 #include "../utils.h"
 #include "../nose.h"
 
+
 #include <errno.h>
 #include <arpa/inet.h>
 
@@ -71,7 +72,7 @@ _create_nat_test_sock(struct sockaddr_in *addr)
  * 
 */
 static int 
-stun_rsp_unpack(char *buf, int size, char *external_ip, int *exteral_port)
+stun_rsp_unpack( char *buf, int size, struct rsp_values *rvals )
 {
       if (size < sizeof(struct _STUN_message_header))
             return (ERROR);
@@ -102,9 +103,9 @@ stun_rsp_unpack(char *buf, int size, char *external_ip, int *exteral_port)
                         #ifdef DEBUG
                         fprintf(stdout, "Mapped Address: %s:%d\n", ipv4, htons(value->port));
                         #endif
-                        strncpy(external_ip, ipv4, strlen(ipv4));
-                        *(external_ip + strlen(ipv4)) = '\0';
-                        *exteral_port = htons(value->port);
+                        strncpy( rvals->external_ip, ipv4, strlen( ipv4 ) );
+                        *( rvals->external_ip + strlen( ipv4 ) ) = '\0';
+                        rvals->external_port = htons( value->port );
                         break;
                   case SRC_ADDR:
                         value = (struct _STUN_attribute_value *)(buf + index);
@@ -113,6 +114,9 @@ stun_rsp_unpack(char *buf, int size, char *external_ip, int *exteral_port)
                         #ifdef DEBUG 
                         fprintf(stdout, "Source Address: %s:%d\n", ipv4, htons(value->port));
                         #endif
+                        strncpy( rvals->source_ip, ipv4, strlen( ipv4 ) );
+                        *( rvals->source_ip + strlen( ipv4 ) ) = '\0';
+                        rvals->source_port = htons( value->port );
                         break;
                   case CHANGE_ADDR:
                         value = (struct _STUN_attribute_value *)(buf + index);
@@ -121,6 +125,9 @@ stun_rsp_unpack(char *buf, int size, char *external_ip, int *exteral_port)
                         #ifdef DEBUG
                         fprintf(stdout, "Changed Address: %s:%d\n", ipv4, htons(value->port));
                         #endif 
+                        strncpy( rvals->changed_ip, ipv4, strlen( ipv4 ) );
+                        *( rvals->changed_ip + strlen( ipv4 ) ) = '\0';
+                        rvals->changed_port = htons( value->port );
                         break;
                   case XOR_MAPPED_ADDR:
                         value = (struct _STUN_attribute_value *)(buf + index);
@@ -146,9 +153,9 @@ stun_rsp_unpack(char *buf, int size, char *external_ip, int *exteral_port)
       return (OK);
 }
 
-static int test1(int sockfd, struct sockaddr_in *dst_addr,
+static int test1( int sockfd, struct sockaddr_in *dst_addr,
       struct sockaddr_in *src_addr, char *trans_id,
-      char *external_ip, int *external_port)
+      struct rsp_values *rvals )
 {
       #ifdef DEBUG
       printf("Do testI\n");
@@ -182,12 +189,12 @@ static int test1(int sockfd, struct sockaddr_in *dst_addr,
             return (len);
       }
       
-      return stun_rsp_unpack(buf, len, external_ip, external_port);
+      return stun_rsp_unpack( buf, len, rvals );
 }
 
-static int test2(int sockfd, struct sockaddr_in *dst_addr,
+static int test2( int sockfd, struct sockaddr_in *dst_addr,
       struct sockaddr_in *src_addr, char *trans_id,
-      char *external_ip, int *external_port)
+      struct rsp_values *rvals )
 {
       #ifdef DEBUG
       printf("Do testII\n");
@@ -244,12 +251,12 @@ static int test2(int sockfd, struct sockaddr_in *dst_addr,
             return (len);
       }
       
-      return stun_rsp_unpack(buf, len, external_ip, external_port);
+      return stun_rsp_unpack( buf, len, rvals );
 }
 
-static int test3(int sockfd, struct sockaddr_in *dst_addr,
+static int test3( int sockfd, struct sockaddr_in *dst_addr,
       struct sockaddr_in *src_addr, char *trans_id,
-      char *external_ip, int *external_port)
+      struct rsp_values *rvals )
 {
       struct _STUN_message_header* header = 
                   (struct _STUN_message_header *)malloc(sizeof(struct _STUN_message_header));
@@ -302,7 +309,7 @@ static int test3(int sockfd, struct sockaddr_in *dst_addr,
             return (len);
       }
 
-      return stun_rsp_unpack(buf, len, external_ip, external_port);
+      return stun_rsp_unpack( buf, len, rvals );
 }
 static int do_test(const char *source_addr, const int source_port, 
       const char *stun_server_addr, const int stun_server_port,
@@ -329,15 +336,17 @@ static int do_test(const char *source_addr, const int source_port,
             #endif
             return (sockfd); 
       }
+
+      struct rsp_values rvals = {0};
       // Do TestI
-      if (test1(sockfd, &dst_addr, &src_addr, trans_id, 
-                  type->ipv4, &(type->port)) == OK)
+      if ( test1( sockfd, &dst_addr, &src_addr, trans_id, 
+                  &rvals ) == OK )
       {
-            if(inet_addr(source_addr) == inet_addr(type->ipv4))
+            if ( inet_addr( source_addr ) == inet_addr( rvals.external_ip ) )
             {
                   // Do testII
-                  if (test2(sockfd, &dst_addr, &src_addr, trans_id,
-                              type->ipv4, &(type->port)) == OK)
+                  if ( test2( sockfd, &dst_addr, &src_addr, trans_id,
+                              &rvals ) == OK )
                   {
                         // Open Internet
                         type->nat_type = OPEN_INTERNET;
@@ -351,22 +360,22 @@ static int do_test(const char *source_addr, const int source_port,
             else
             {
                   // Do TestII
-                  if(test2(sockfd, &dst_addr, &src_addr, trans_id, 
-                              type->ipv4, &(type->port)) == OK)
+                  if( test2( sockfd, &dst_addr, &src_addr, trans_id, 
+                              &rvals ) == OK ) 
                   {
                         // Full Cone
                         type->nat_type = FULL_CONE;
                   }
                   else
                   {
-                        if (test1(sockfd, &dst_addr, &src_addr, trans_id, 
-                                    type->ipv4, &(type->port)) == OK)
+                        if ( test1( sockfd, &dst_addr, &src_addr, trans_id, 
+                                    &rvals ) == OK )
                         {
-                              if (inet_addr(source_addr) == inet_addr(type->ipv4))
+                              if ( inet_addr( source_addr ) == inet_addr( rvals.changed_ip ) )
                               {
                                     // Do testIII
-                                    if (test1(sockfd, &dst_addr, &src_addr, trans_id, 
-                                                type->ipv4, &(type->port)) == OK)
+                                    if (test3( sockfd, &dst_addr, &src_addr, trans_id, 
+                                                &rvals ) == OK )
                                     {
                                           // Restricted
                                           type->nat_type = RESTRICTED;
@@ -395,6 +404,10 @@ static int do_test(const char *source_addr, const int source_port,
       {     // UDP Blocked
             type->nat_type = UDP_BLOCKED;
       }
+
+      strncpy( type->ipv4, rvals.external_ip, strlen( rvals.external_ip ) );
+      type->port = rvals.external_port;
+
       return (sockfd);
 }
 
@@ -404,7 +417,8 @@ int get_nat_type(char *source_addr, int source_port,
       struct nat_type *type)
 {
       if (type == NULL) return (ERROR);
-      
+      memset( type, 0, sizeof( struct nat_type ) );
+
       const char* _source_addr = source_addr == NULL ? DEFAULT_SRC_IP : source_addr;
       const int _source_port = source_port <= 0 ? DEFAULT_SRC_PORT: source_port;
       const int _stun_server_port = stun_server_port <= 0 ? DEFAULT_STUN_PORT : stun_server_port;
@@ -422,5 +436,6 @@ int get_nat_type(char *source_addr, int source_port,
       #ifdef DEBUG
             fprintf(stdout, "[INFO] Test NAT type %s:%d->%s:%d\n", _source_addr, _source_port, _stun_server_addr, _stun_server_port);
       #endif 
+      
       return do_test(_source_addr, _source_port, _stun_server_addr, _stun_server_port, type);
 }

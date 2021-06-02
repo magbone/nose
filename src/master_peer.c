@@ -154,7 +154,10 @@ ping_peer(int sock, short which, void *arg)
             if (PMP_ping_rsp_unpack(source_id, target_id, buf, len) == OK)
             {
                   if (strcmp(source_id, item->node_id) == 0 && strcmp(target_id, mstp->node_id) == 0)
+                  {
                         fprintf(stdout, "[INFO] Node %s is alive\n", source_id);
+                        bucket_move_to_top( &mstp->master_peer_bkt, source_id );
+                  }
                   else fprintf(stdout, "[INFO] Invalid PMP packet received\n");
             }     
             else fprintf(stdout, "[INFO] Malformation PMP packet received\n");

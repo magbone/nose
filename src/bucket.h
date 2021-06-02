@@ -60,6 +60,8 @@ int bucket_size(struct bucket *bkt);
 int get_item_by_vlan_ipv4(struct bucket *bkt, char *vlan_ipv4, struct bucket_item *item);
 // 将某个结点移动到桶的底部
 int bucket_move_to_bottom( struct bucket *bkt, char *node_id );
+// 将某个结点移动到顶部
+int bucket_move_to_top( struct bucket *bkt, char *node_id );
 // 销毁指定的桶，清空里面的条目。
 void destory_bucket(struct bucket *bkt);
 

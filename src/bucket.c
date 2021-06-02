@@ -169,6 +169,11 @@ bucket_move_to_bottom( struct bucket *bkt, char *node_id )
       for ( i = bkt->top ; i >= 0; i-- )
            if ( strcmp( bkt->b[i].node_id, node_id ) == 0 )
                   break;
+      if ( i < 0 )
+      {
+            pthread_mutex_unlock( &mutex );
+            return ( ERROR );
+      }
 
       struct bucket_item tmp = bkt->b[i];
       for ( ; i > 0; i-- )
@@ -177,6 +182,28 @@ bucket_move_to_bottom( struct bucket *bkt, char *node_id )
       // Update visted
       bkt->visited = ( bkt->visited - 1 ) % ( bkt->top + 1 );
       pthread_mutex_unlock( &mutex );
+      return ( OK );
+}
+
+int 
+bucket_move_to_top( struct bucket *bkt, char *node_id )
+{
+      pthread_mutex_lock( &mutex );
+      int i;
+      for ( i = bkt->top; i >= 0; i-- )
+           if ( strcmp( bkt->b[i].node_id, node_id ) == 0 )
+                  break;
+      if ( i < 0 )
+      {
+            pthread_mutex_unlock( &mutex );
+            return ( ERROR );
+      }
+
+      struct bucket_item tmp = bkt->b[i];
+      for ( ; i < bkt->top; i++)
+            bkt->b[i] = bkt->b[i + 1];
+      bkt->b[bkt->top] = tmp;
+      pthread_mutex_unlock( &mutex ); 
       return ( OK );
 }
 

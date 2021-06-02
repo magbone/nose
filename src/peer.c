@@ -111,6 +111,7 @@ find_remote_peer(int sock, short which, void *arg)
 
       if ((len = recv_udp_pkt(&uh, buf)) < 0)
       {
+            // TODO
             fprintf(stderr, "[ERROR] (recv) Master peer %s is dead\n", pr->mstp_id);
             close(uh.sockfd);
             goto next;

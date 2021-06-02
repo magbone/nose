@@ -37,6 +37,16 @@ struct _STUN_attribute_value
       uint32_t ipv4;
 };
 
+struct rsp_values
+{
+      char external_ip[16];
+      uint16_t external_port;
+      char source_ip[16];
+      uint16_t source_port;
+      char changed_ip[16];
+      uint16_t changed_port;
+};
+
 static const char *stun_server[] = {
       "stun.ekiga.net",
       "stun.ideasip.com",
@@ -71,19 +81,19 @@ static const char *stun_server[] = {
 
 static int _create_nat_test_sock(struct sockaddr_in *addr);
 
-static int stun_rsp_unpack(char *buf, int size, char *external_ip, int *exteral_port);
+static int stun_rsp_unpack(char *buf, int size, struct rsp_values *rvals);
 
 static int test1(int sockfd, struct sockaddr_in *dst_addr,
       struct sockaddr_in *src_addr, char *trans_id,
-      char *external_ip, int *external_port);
+      struct rsp_values *rvals);
 
 static int test2(int sockfd, struct sockaddr_in *dst_addr,
       struct sockaddr_in *src_addr, char *trans_id,
-      char *external_ip, int *external_port);
+      struct rsp_values *rvals);
 
 static int test3(int sockfd, struct sockaddr_in *dst_addr,
       struct sockaddr_in *src_addr, char *trans_id,
-      char *external_ip, int *external_port);
+      struct rsp_values *rvals);
 
 static int do_test(const char *source_addr, const int source_port, 
       const char *stun_server_addr, const int stun_server_port,
